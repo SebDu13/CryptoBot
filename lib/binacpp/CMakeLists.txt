@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(binacpp)
+project(CryptoBot2)
 
 find_package(CURL REQUIRED) 
 find_package(PkgConfig REQUIRED)

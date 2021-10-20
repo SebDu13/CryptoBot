@@ -1,15 +1,4 @@
-
-/*
-	Author: tensaix2j
-	Date  : 2017/10/15
-	
-	C++ library for Binance API.
-*/
-
-
-#ifndef BINACPP_H
-#define BINACPP_H
-
+#pragma once
 
 #include <string.h>
 #include <stdlib.h>
@@ -166,6 +155,3 @@ class BinaCPP {
 
 
 };
-
-
-#endif
