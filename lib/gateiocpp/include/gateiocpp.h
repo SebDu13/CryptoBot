@@ -13,8 +13,7 @@
 #include <exception>
 
 #include <curl/curl.h>
-#include <json/json.h>
-
+#include "json/json.h"
 
 #define GATEIO_HOST "https://api.gateio.ws"
 

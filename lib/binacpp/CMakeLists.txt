@@ -2,14 +2,12 @@ cmake_minimum_required(VERSION 3.1)
 project(CryptoBot2)
 
 find_package(CURL REQUIRED) 
-find_package(PkgConfig REQUIRED)
 
-pkg_check_modules(JSONCPP jsoncpp)
-link_libraries(${JSONCPP_LIBRARIES})
-
-include_directories(${CURL_INCLUDE_DIR})
-include_directories("${JSONCPP_INCLUDE_DIRS}")
-include_directories(include)
+include_directories(
+	include
+	../jsoncpp-1.8.3/include
+	${CURL_INCLUDE_DIR}
+)
 
 add_library (
 	binacpp

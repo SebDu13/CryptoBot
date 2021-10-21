@@ -1,15 +1,11 @@
 cmake_minimum_required(VERSION 3.1)
-project(gateiocpp)
+project(CryptoBot2)
 
 find_package(CURL REQUIRED) 
-find_package(PkgConfig REQUIRED)
-
-pkg_check_modules(JSONCPP jsoncpp)
-link_libraries(${JSONCPP_LIBRARIES})
 
 include_directories(
 	${CURL_INCLUDE_DIR}
-	${JSONCPP_INCLUDE_DIRS}
+	../jsoncpp-1.8.3/include
 	include
 )
 
@@ -18,7 +14,6 @@ set(BINANCE_INCLUDE_DIR ${BINANCE_LIB_DIR}/include)
 
 include_directories(
   ${BINANCE_INCLUDE_DIR}
-  ${JSONCPP_INCLUDE_DIRS}
 )
 
 add_library (
