@@ -1,28 +1,12 @@
 
-
-/*
-	Author: tensaix2j
-	Date  : 2017/10/15
-	
-	C++ library for Binance API.
-*/
-
-
-
-
-
 #include "binacpp.h"
-#include "binacpp_logger.h"
+#include "logger.h"
 #include "binacpp_utils.h"
-
-
 
 
 string BinaCPP::api_key = "";
 string BinaCPP::secret_key = "";
 CURL* BinaCPP::curl = NULL;
-
-
 
 
 //---------------------------------
@@ -49,7 +33,7 @@ BinaCPP::cleanup()
 void 
 BinaCPP::get_exchangeInfo( Json::Value &json_result)
 {
-	BinaCPP_logger::write_log( "<BinaCPP::get_exchangeInfo>" ) ;
+	LOG_INFO << "<BinaCPP::get_exchangeInfo>";
 
 	string url(BINANCE_HOST);  
 	url += "/api/v1/exchangeInfo";
@@ -65,12 +49,12 @@ BinaCPP::get_exchangeInfo( Json::Value &json_result)
 			reader.parse( str_result , json_result );
 	    		
 		} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_exchangeInfo> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_exchangeInfo> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_exchangeInfo> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_exchangeInfo> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_exchangeInfo> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::get_exchangeInfo> Failed to get anything.";
 	}
 }
 //------------------
@@ -79,7 +63,7 @@ BinaCPP::get_exchangeInfo( Json::Value &json_result)
 void 
 BinaCPP::get_serverTime( Json::Value &json_result) 
 {
-	BinaCPP_logger::write_log( "<BinaCPP::get_serverTime>" ) ;
+	LOG_INFO << "<BinaCPP::get_serverTime>";
 
 	string url(BINANCE_HOST);  
 	url += "/api/v1/time";
@@ -95,12 +79,12 @@ BinaCPP::get_serverTime( Json::Value &json_result)
 			reader.parse( str_result , json_result );
 	    		
 		} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_serverTime> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_serverTime> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_serverTime> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_serverTime> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_serverTime> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::get_serverTime> Failed to get anything.";
 	}
 }
 
@@ -115,7 +99,7 @@ void
 BinaCPP::get_allPrices( Json::Value &json_result ) 
 {	
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_allPrices>" ) ;
+	LOG_INFO << "<BinaCPP::get_allPrices>";
 
 	string url(BINANCE_HOST);  
 	url += "/api/v1/ticker/allPrices";
@@ -131,12 +115,12 @@ BinaCPP::get_allPrices( Json::Value &json_result )
 			reader.parse( str_result , json_result );
 	    		
 		} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_allPrices> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_allPrices> Error ! %s", e.what() ; 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_allPrices> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_allPrices> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_allPrices> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::get_allPrices> Failed to get anything.";
 	}
 }
 
@@ -146,7 +130,7 @@ BinaCPP::get_allPrices( Json::Value &json_result )
 double
 BinaCPP::get_price( const char *symbol )
 {
-	BinaCPP_logger::write_log( "<BinaCPP::get_price>" ) ;
+	LOG_INFO << "<BinaCPP::get_price>";
 
 	double ret = 0.0;
 	Json::Value alltickers;
@@ -178,7 +162,7 @@ void
 BinaCPP::get_allBookTickers(  Json::Value &json_result ) 
 {	
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_allBookTickers>" ) ;
+	LOG_INFO <<"<BinaCPP::get_allBookTickers>";
 
 	string url(BINANCE_HOST);  
 	url += "/api/v1/ticker/allBookTickers";
@@ -194,12 +178,12 @@ BinaCPP::get_allBookTickers(  Json::Value &json_result )
 	    		reader.parse( str_result , json_result );
 	    		
 	    	} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_allBookTickers> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_allBookTickers> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_allBookTickers> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_allBookTickers> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_allBookTickers> Failed to get anything." ) ;
+		LOG_INFO <<"<BinaCPP::get_allBookTickers> Failed to get anything.";
 	}
 }
 
@@ -209,7 +193,7 @@ BinaCPP::get_allBookTickers(  Json::Value &json_result )
 void 
 BinaCPP::get_bookTicker( const char *symbol, Json::Value &json_result ) 
 {
-	BinaCPP_logger::write_log( "<BinaCPP::get_BookTickers>" ) ;
+	LOG_INFO << "<BinaCPP::get_BookTickers>";
 
 	Json::Value alltickers;
 	string str_symbol = string_toupper(symbol);
@@ -246,7 +230,7 @@ BinaCPP::get_depth(
 	Json::Value &json_result ) 
 {	
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_depth>" ) ;
+	LOG_INFO <<"<BinaCPP::get_depth>";
 
 	string url(BINANCE_HOST);  
 	url += "/api/v1/depth?";
@@ -257,7 +241,7 @@ BinaCPP::get_depth(
 	querystring.append( to_string( limit ) );
 
 	url.append( querystring );
-	BinaCPP_logger::write_log( "<BinaCPP::get_depth> url = |%s|" , url.c_str() ) ;
+	LOG_INFO << "<BinaCPP::get_depth> url = |%s|" , url.c_str();
 	
 	string str_result;
 	curl_api( url, str_result ) ;
@@ -270,12 +254,12 @@ BinaCPP::get_depth(
 	    		reader.parse( str_result , json_result );
 	    		
 		} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_depth> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_depth> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_depth> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_depth> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_depth> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::get_depth> Failed to get anything.";
 	}
 }
 
@@ -310,7 +294,7 @@ BinaCPP::get_aggTrades(
 ) 
 {	
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_aggTrades>" ) ;
+	LOG_INFO <<"<BinaCPP::get_aggTrades>";
 
 	string url(BINANCE_HOST);  
 	url += "/api/v1/aggTrades?";
@@ -336,7 +320,7 @@ BinaCPP::get_aggTrades(
 	}
 
 	url.append( querystring );
-	BinaCPP_logger::write_log( "<BinaCPP::get_aggTrades> url = |%s|" , url.c_str() ) ;
+	LOG_INFO << "<BinaCPP::get_aggTrades> url = |%s|" , url.c_str();
 	
 	string str_result;
 	curl_api( url, str_result ) ;
@@ -349,12 +333,12 @@ BinaCPP::get_aggTrades(
 	    		reader.parse( str_result , json_result );
 	    		
 		} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_aggTrades> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_aggTrades> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_aggTrades> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_aggTrades> Done." ;
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_aggTrades> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::get_aggTrades> Failed to get anything.";
 	}
 }
 
@@ -376,7 +360,7 @@ void
 BinaCPP::get_24hr( const char *symbol, Json::Value &json_result ) 
 {	
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_24hr>" ) ;
+	LOG_INFO << "<BinaCPP::get_24hr>";
 
 	string url(BINANCE_HOST);  
 	url += "/api/v1/ticker/24hr?";
@@ -387,7 +371,7 @@ BinaCPP::get_24hr( const char *symbol, Json::Value &json_result )
 
 	
 	url.append( querystring );
-	BinaCPP_logger::write_log( "<BinaCPP::get_24hr> url = |%s|" , url.c_str() ) ;
+	LOG_INFO << "<BinaCPP::get_24hr> url = |%s|" , url.c_str();
 	
 	string str_result;
 	curl_api( url, str_result ) ;
@@ -400,12 +384,12 @@ BinaCPP::get_24hr( const char *symbol, Json::Value &json_result )
 	    		reader.parse( str_result , json_result );
 	    		
 		} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_24hr> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_24hr> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_24hr> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_24hr> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_24hr> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::get_24hr> Failed to get anything.";
 	}
 }
 
@@ -438,7 +422,7 @@ BinaCPP::get_klines(
 	Json::Value &json_result ) 
 {		
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_klines>" ) ;
+	LOG_INFO << "<BinaCPP::get_klines>";
 
 	string url(BINANCE_HOST);  
 	url += "/api/v1/klines?";
@@ -464,7 +448,7 @@ BinaCPP::get_klines(
 
 	
 	url.append( querystring );
-	BinaCPP_logger::write_log( "<BinaCPP::get_klines> url = |%s|" , url.c_str() ) ;
+	LOG_INFO << "<BinaCPP::get_klines> url = |%s|" , url.c_str();
 	
 	string str_result;
 	curl_api( url, str_result ) ;
@@ -477,12 +461,12 @@ BinaCPP::get_klines(
 			reader.parse( str_result , json_result );
 	    		
 		} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_klines> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_klines> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_klines> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_klines> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_klines> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::get_klines> Failed to get anything.";
 	}
 }
 
@@ -515,10 +499,10 @@ void
 BinaCPP::get_account( long recvWindow,  Json::Value &json_result ) 
 {	
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_account>" ) ;
+	LOG_INFO << "<BinaCPP::get_account>";
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 ) {
-		BinaCPP_logger::write_log( "<BinaCPP::get_account> API Key and Secret Key has not been set." ) ;
+		LOG_INFO << "<BinaCPP::get_account> API Key and Secret Key has not been set.";
 		return ;
 	}
 
@@ -546,7 +530,7 @@ BinaCPP::get_account( long recvWindow,  Json::Value &json_result )
 	header_chunk.append( api_key );
 	extra_http_header.push_back(header_chunk);
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_account> url = |%s|" , url.c_str() ) ;
+	LOG_INFO << "<BinaCPP::get_account> url = |%s|" , url.c_str();
 	
 	string post_data = "";
 	
@@ -562,15 +546,15 @@ BinaCPP::get_account( long recvWindow,  Json::Value &json_result )
 			reader.parse( str_result , json_result );
 	    		
 	    	} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_account> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_account> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_account> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_account> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_account> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::get_account> Failed to get anything.";
 	}
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_account> Done.\n" ) ;
+	LOG_INFO << "<BinaCPP::get_account> Done.\n";
 
 }
 
@@ -604,10 +588,10 @@ BinaCPP::get_myTrades(
 	Json::Value &json_result ) 
 {	
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_myTrades>" ) ;
+	LOG_INFO << "<BinaCPP::get_myTrades>";
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 ) {
-		BinaCPP_logger::write_log( "<BinaCPP::get_myTrades> API Key and Secret Key has not been set." ) ;
+		LOG_INFO << "<BinaCPP::get_myTrades> API Key and Secret Key has not been set.";
 		return ;
 	}
 
@@ -646,7 +630,7 @@ BinaCPP::get_myTrades(
 	header_chunk.append( api_key );
 	extra_http_header.push_back(header_chunk);
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_myTrades> url = |%s|" , url.c_str() ) ;
+	LOG_INFO << "<BinaCPP::get_myTrades> url = |%s|" , url.c_str();
 	
 	string action = "GET";
 	string post_data = "";
@@ -663,15 +647,15 @@ BinaCPP::get_myTrades(
 			reader.parse( str_result , json_result );
 	    		
 	    	} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_myTrades> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_myTrades> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_myTrades> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_myTrades> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_myTrades> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::get_myTrades> Failed to get anything.";
 	}
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_myTrades> Done.\n" ) ;
+	LOG_INFO << "<BinaCPP::get_myTrades> Done.\n";
 
 }
 
@@ -704,10 +688,10 @@ BinaCPP::get_openOrders(
 ) 
 {	
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_openOrders>" ) ;
+	LOG_INFO << "<BinaCPP::get_openOrders>";
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 ) {
-		BinaCPP_logger::write_log( "<BinaCPP::get_openOrders> API Key and Secret Key has not been set." ) ;
+		LOG_INFO << "<BinaCPP::get_openOrders> API Key and Secret Key has not been set.";
 		return ;
 	}
 
@@ -742,7 +726,7 @@ BinaCPP::get_openOrders(
 	string action = "GET";
 	string post_data ="";
 		
-	BinaCPP_logger::write_log( "<BinaCPP::get_openOrders> url = |%s|" , url.c_str() ) ;
+	LOG_INFO << "<BinaCPP::get_openOrders> url = |%s|" , url.c_str();
 	
 	string str_result;
 	curl_api_with_header( url, str_result , extra_http_header, post_data , action ) ;
@@ -756,15 +740,15 @@ BinaCPP::get_openOrders(
 			reader.parse( str_result , json_result );
 	    		
 	    	} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_openOrders> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_openOrders> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_openOrders> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_openOrders> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_openOrders> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::get_openOrders> Failed to get anything.";
 	}
 	
-	BinaCPP_logger::write_log( "<BinaCPP::get_openOrders> Done.\n" ) ;
+	LOG_INFO << "<BinaCPP::get_openOrders> Done.\n";
 
 }
 
@@ -808,10 +792,10 @@ BinaCPP::get_allOrders(
 
 {	
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_allOrders>" ) ;
+	LOG_INFO << "<BinaCPP::get_allOrders>";
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 ) {
-		BinaCPP_logger::write_log( "<BinaCPP::get_allOrders> API Key and Secret Key has not been set." ) ;
+		LOG_INFO << "<BinaCPP::get_allOrders> API Key and Secret Key has not been set.";
 		return ;
 	}
 
@@ -855,7 +839,7 @@ BinaCPP::get_allOrders(
 	string action = "GET";
 	string post_data ="";
 		
-	BinaCPP_logger::write_log( "<BinaCPP::get_allOrders> url = |%s|" , url.c_str() ) ;
+	LOG_INFO << "<BinaCPP::get_allOrders> url = |%s|" , url.c_str();
 	
 	string str_result;
 	curl_api_with_header( url, str_result , extra_http_header, post_data , action ) ;
@@ -869,15 +853,15 @@ BinaCPP::get_allOrders(
 			reader.parse( str_result , json_result );
 	    		
 	    	} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_allOrders> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_allOrders> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_allOrders> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_allOrders> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_allOrders> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::get_allOrders> Failed to get anything.";
 	}
 	
-	BinaCPP_logger::write_log( "<BinaCPP::get_allOrders> Done.\n" ) ;
+	LOG_INFO << "<BinaCPP::get_allOrders> Done.\n";
 
 }
 
@@ -917,10 +901,10 @@ BinaCPP::send_order(
 	Json::Value &json_result ) 
 {	
 
-	BinaCPP_logger::write_log( "<BinaCPP::send_order>" ) ;
+	LOG_INFO << "<BinaCPP::send_order>";
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 ) {
-		BinaCPP_logger::write_log( "<BinaCPP::send_order> API Key and Secret Key has not been set." ) ;
+		LOG_INFO << "<BinaCPP::send_order> API Key and Secret Key has not been set.";
 		return ;
 	}
 
@@ -982,7 +966,7 @@ BinaCPP::send_order(
 	header_chunk.append( api_key );
 	extra_http_header.push_back(header_chunk);
 
-	BinaCPP_logger::write_log( "<BinaCPP::send_order> url = |%s|, post_data = |%s|" , url.c_str(), post_data.c_str() ) ;
+	LOG_INFO << "<BinaCPP::send_order> url = |%s|, post_data = |%s|" , url.c_str(), post_data.c_str();
 	
 	string str_result;
 	curl_api_with_header( url, str_result , extra_http_header, post_data, action ) ;
@@ -995,15 +979,15 @@ BinaCPP::send_order(
 			reader.parse( str_result , json_result );
 	    		
 	    	} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::send_order> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::send_order> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::send_order> Done." ) ;
+		LOG_INFO << "<BinaCPP::send_order> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::send_order> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::send_order> Failed to get anything.";
 	}
 	
-	BinaCPP_logger::write_log( "<BinaCPP::send_order> Done.\n" ) ;
+	LOG_INFO << "<BinaCPP::send_order> Done.\n";
 
 }
 
@@ -1030,10 +1014,10 @@ BinaCPP::get_order(
 	Json::Value &json_result ) 
 {	
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_order>" ) ;
+	LOG_INFO << "<BinaCPP::get_order>";
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 ) {
-		BinaCPP_logger::write_log( "<BinaCPP::get_order> API Key and Secret Key has not been set." ) ;
+		LOG_INFO << "<BinaCPP::get_order> API Key and Secret Key has not been set.";
 		return ;
 	}
 
@@ -1076,7 +1060,7 @@ BinaCPP::get_order(
 
 	string post_data = "";
 	
-	BinaCPP_logger::write_log( "<BinaCPP::get_order> url = |%s|" , url.c_str() ) ;
+	LOG_INFO << "<BinaCPP::get_order> url = |%s|" , url.c_str();
 	
 	string str_result;
 	curl_api_with_header( url, str_result , extra_http_header, post_data , action ) ;
@@ -1089,16 +1073,16 @@ BinaCPP::get_order(
 			reader.parse( str_result , json_result );
 	    		
 	    	} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_order> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_order> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_order> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_order> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_order> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::get_order> Failed to get anything.";
 	}
 
 	
-	BinaCPP_logger::write_log( "<BinaCPP::get_order> Done.\n" ) ;
+	LOG_INFO << "<BinaCPP::get_order> Done.\n";
 
 }
 
@@ -1133,10 +1117,10 @@ BinaCPP::cancel_order(
 	Json::Value &json_result ) 
 {	
 
-	BinaCPP_logger::write_log( "<BinaCPP::send_order>" ) ;
+	LOG_INFO << "<BinaCPP::send_order>";
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 ) {
-		BinaCPP_logger::write_log( "<BinaCPP::send_order> API Key and Secret Key has not been set." ) ;
+		LOG_INFO << "<BinaCPP::send_order> API Key and Secret Key has not been set.";
 		return ;
 	}
 
@@ -1183,7 +1167,7 @@ BinaCPP::cancel_order(
 	header_chunk.append( api_key );
 	extra_http_header.push_back(header_chunk);
 
-	BinaCPP_logger::write_log( "<BinaCPP::send_order> url = |%s|, post_data = |%s|" , url.c_str(), post_data.c_str() ) ;
+	LOG_INFO << "<BinaCPP::send_order> url = |%s|, post_data = |%s|" , url.c_str(), post_data.c_str();
 	
 	string str_result;
 	curl_api_with_header( url, str_result , extra_http_header, post_data, action ) ;
@@ -1196,15 +1180,15 @@ BinaCPP::cancel_order(
 			reader.parse( str_result , json_result );
 	    		
 	    	} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::send_order> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::send_order> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::send_order> Done." ) ;
+		LOG_INFO << "<BinaCPP::send_order> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::send_order> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::send_order> Failed to get anything.";
 	}
 	
-	BinaCPP_logger::write_log( "<BinaCPP::send_order> Done.\n" ) ;
+	LOG_INFO << "<BinaCPP::send_order> Done.\n";
 
 }
 
@@ -1218,10 +1202,10 @@ BinaCPP::cancel_order(
 void 
 BinaCPP::start_userDataStream( Json::Value &json_result ) 
 {	
-	BinaCPP_logger::write_log( "<BinaCPP::start_userDataStream>" ) ;
+	LOG_INFO << "<BinaCPP::start_userDataStream>";
 
 	if ( api_key.size() == 0 ) {
-		BinaCPP_logger::write_log( "<BinaCPP::start_userDataStream> API Key has not been set." ) ;
+		LOG_INFO << "<BinaCPP::start_userDataStream> API Key has not been set.";
 		return ;
 	}
 
@@ -1236,7 +1220,7 @@ BinaCPP::start_userDataStream( Json::Value &json_result )
 	header_chunk.append( api_key );
 	extra_http_header.push_back(header_chunk);
 
-	BinaCPP_logger::write_log( "<BinaCPP::start_userDataStream> url = |%s|" , url.c_str() ) ;
+	LOG_INFO << "<BinaCPP::start_userDataStream> url = |%s|" , url.c_str();
 	
 	string action = "POST";
 	string post_data = "";
@@ -1252,15 +1236,15 @@ BinaCPP::start_userDataStream( Json::Value &json_result )
 			reader.parse( str_result , json_result );
 	    		
 	    	} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::start_userDataStream> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::start_userDataStream> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::start_userDataStream> Done." ) ;
+		LOG_INFO << "<BinaCPP::start_userDataStream> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::start_userDataStream> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::start_userDataStream> Failed to get anything.";
 	}
 
-	BinaCPP_logger::write_log( "<BinaCPP::start_userDataStream> Done.\n" ) ;
+	LOG_INFO << "<BinaCPP::start_userDataStream> Done.\n";
 
 }
 
@@ -1277,10 +1261,10 @@ BinaCPP::start_userDataStream( Json::Value &json_result )
 void 
 BinaCPP::keep_userDataStream( const char *listenKey ) 
 {	
-	BinaCPP_logger::write_log( "<BinaCPP::keep_userDataStream>" ) ;
+	LOG_INFO << "<BinaCPP::keep_userDataStream>";
 
 	if ( api_key.size() == 0 ) {
-		BinaCPP_logger::write_log( "<BinaCPP::keep_userDataStream> API Key has not been set." ) ;
+		LOG_INFO << "<BinaCPP::keep_userDataStream> API Key has not been set.";
 		return ;
 	}
 
@@ -1299,20 +1283,20 @@ BinaCPP::keep_userDataStream( const char *listenKey )
 	string post_data("listenKey=");
 	post_data.append( listenKey );
 
-	BinaCPP_logger::write_log( "<BinaCPP::keep_userDataStream> url = |%s|, post_data = |%s|" , url.c_str() , post_data.c_str() ) ;
+	LOG_INFO << "<BinaCPP::keep_userDataStream> url = " << url << "," << " post_data = " << post_data;
 	
 	string str_result;
 	curl_api_with_header( url, str_result , extra_http_header , post_data , action ) ;
 
 	if ( str_result.size() > 0 ) {
 		
-		BinaCPP_logger::write_log( "<BinaCPP::keep_userDataStream> Done." ) ;
+		LOG_INFO << "<BinaCPP::keep_userDataStream> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::keep_userDataStream> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::keep_userDataStream> Failed to get anything.";
 	}
 
-	BinaCPP_logger::write_log( "<BinaCPP::keep_userDataStream> Done.\n" ) ;
+	LOG_INFO << "<BinaCPP::keep_userDataStream> Done.\n";
 
 }
 
@@ -1325,10 +1309,10 @@ BinaCPP::keep_userDataStream( const char *listenKey )
 void 
 BinaCPP::close_userDataStream( const char *listenKey ) 
 {	
-	BinaCPP_logger::write_log( "<BinaCPP::close_userDataStream>" ) ;
+	LOG_INFO << "<BinaCPP::close_userDataStream>";
 
 	if ( api_key.size() == 0 ) {
-		BinaCPP_logger::write_log( "<BinaCPP::close_userDataStream> API Key has not been set." ) ;
+		LOG_INFO << "<BinaCPP::close_userDataStream> API Key has not been set.";
 		return ;
 	}
 
@@ -1347,20 +1331,20 @@ BinaCPP::close_userDataStream( const char *listenKey )
 	string post_data("listenKey=");
 	post_data.append( listenKey );
 
-	BinaCPP_logger::write_log( "<BinaCPP::close_userDataStream> url = |%s|, post_data = |%s|" , url.c_str() , post_data.c_str() ) ;
+	LOG_INFO << "<BinaCPP::close_userDataStream> url = " <<url << " ," << " post_data = " << post_data;
 	
 	string str_result;
 	curl_api_with_header( url, str_result , extra_http_header , post_data , action ) ;
 
 	if ( str_result.size() > 0 ) {
 		
-		BinaCPP_logger::write_log( "<BinaCPP::close_userDataStream> Done." ) ;
+		LOG_INFO << "<BinaCPP::close_userDataStream> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::close_userDataStream> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::close_userDataStream> Failed to get anything.";
 	}
 
-	BinaCPP_logger::write_log( "<BinaCPP::close_userDataStream> Done.\n" ) ;
+	LOG_INFO << "<BinaCPP::close_userDataStream> Done.\n";
 
 }
 
@@ -1394,10 +1378,10 @@ BinaCPP::withdraw(
 	Json::Value &json_result ) 
 {	
 
-	BinaCPP_logger::write_log( "<BinaCPP::withdraw>" ) ;
+	LOG_INFO << "<BinaCPP::withdraw>";
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 ) {
-		BinaCPP_logger::write_log( "<BinaCPP::send_order> API Key and Secret Key has not been set." ) ;
+		LOG_INFO << "<BinaCPP::send_order> API Key and Secret Key has not been set.";
 		return ;
 	}
 
@@ -1443,7 +1427,7 @@ BinaCPP::withdraw(
 	header_chunk.append( api_key );
 	extra_http_header.push_back(header_chunk);
 
-	BinaCPP_logger::write_log( "<BinaCPP::withdraw> url = |%s|, post_data = |%s|" , url.c_str(), post_data.c_str() ) ;
+	LOG_INFO << "<BinaCPP::withdraw> url = " << url << " , post_data = " << post_data;
 	
 	string str_result;
 	curl_api_with_header( url, str_result , extra_http_header, post_data, action ) ;
@@ -1456,15 +1440,15 @@ BinaCPP::withdraw(
 			reader.parse( str_result , json_result );
 	    		
 	    	} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::withdraw> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::withdraw> Error ! %s", e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::withdraw> Done." ) ;
+		LOG_INFO << "<BinaCPP::withdraw> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::withdraw> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::withdraw> Failed to get anything.";
 	}
 	
-	BinaCPP_logger::write_log( "<BinaCPP::withdraw> Done.\n" ) ;
+	LOG_INFO << "<BinaCPP::withdraw> Done.\n";
 
 }
 
@@ -1495,10 +1479,10 @@ BinaCPP::get_depositHistory(
 {	
 
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_depostHistory>" ) ;
+	LOG_INFO << "<BinaCPP::get_depostHistory>";
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 ) {
-		BinaCPP_logger::write_log( "<BinaCPP::get_depostHistory> API Key and Secret Key has not been set." ) ;
+		LOG_INFO << "<BinaCPP::get_depostHistory> API Key and Secret Key has not been set.";
 		return ;
 	}
 
@@ -1549,7 +1533,7 @@ BinaCPP::get_depositHistory(
 
 	string post_data = "";
 	
-	BinaCPP_logger::write_log( "<BinaCPP::get_depostHistory> url = |%s|" , url.c_str() ) ;
+	LOG_INFO << "<BinaCPP::get_depostHistory> url = " << url;
 	
 	string str_result;
 	curl_api_with_header( url, str_result , extra_http_header, post_data , action ) ;
@@ -1562,15 +1546,15 @@ BinaCPP::get_depositHistory(
 			reader.parse( str_result , json_result );
 	    		
 	    	} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_depostHistory> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_depostHistory> Error ! " <<  e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_depostHistory> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_depostHistory> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_depostHistory> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::get_depostHistory> Failed to get anything.";
 	}
 	
-	BinaCPP_logger::write_log( "<BinaCPP::get_depostHistory> Done.\n" ) ;
+	LOG_INFO << "<BinaCPP::get_depostHistory> Done.\n";
 }
 
 
@@ -1610,10 +1594,10 @@ BinaCPP::get_withdrawHistory(
 {	
 
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_withdrawHistory>" ) ;
+	LOG_INFO << "<BinaCPP::get_withdrawHistory>";
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 ) {
-		BinaCPP_logger::write_log( "<BinaCPP::get_withdrawHistory> API Key and Secret Key has not been set." ) ;
+		LOG_INFO << "<BinaCPP::get_withdrawHistory> API Key and Secret Key has not been set.";
 		return ;
 	}
 
@@ -1664,7 +1648,7 @@ BinaCPP::get_withdrawHistory(
 
 	string post_data = "";
 	
-	BinaCPP_logger::write_log( "<BinaCPP::get_withdrawHistory> url = |%s|" , url.c_str() ) ;
+	LOG_INFO << "<BinaCPP::get_withdrawHistory> url = " << url;
 	
 	string str_result;
 	curl_api_with_header( url, str_result , extra_http_header, post_data , action ) ;
@@ -1677,15 +1661,15 @@ BinaCPP::get_withdrawHistory(
 			reader.parse( str_result , json_result );
 	    		
 	    	} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_withdrawHistory> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_withdrawHistory> Error ! " << e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_withdrawHistory> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_withdrawHistory> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_withdrawHistory> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::get_withdrawHistory> Failed to get anything.";
 	}
 	
-	BinaCPP_logger::write_log( "<BinaCPP::get_withdrawHistory> Done.\n" ) ;
+	LOG_INFO << "<BinaCPP::get_withdrawHistory> Done.\n";
 }
 
 
@@ -1716,10 +1700,10 @@ BinaCPP::get_depositAddress(
 {	
 
 
-	BinaCPP_logger::write_log( "<BinaCPP::get_depositAddress>" ) ;
+	LOG_INFO << "<BinaCPP::get_depositAddress>";
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 ) {
-		BinaCPP_logger::write_log( "<BinaCPP::get_depositAddress> API Key and Secret Key has not been set." ) ;
+		LOG_INFO << "<BinaCPP::get_depositAddress> API Key and Secret Key has not been set.";
 		return ;
 	}
 
@@ -1751,7 +1735,7 @@ BinaCPP::get_depositAddress(
 
 	string post_data = "";
 	
-	BinaCPP_logger::write_log( "<BinaCPP::get_depositAddress> url = |%s|" , url.c_str() ) ;
+	LOG_INFO << "<BinaCPP::get_depositAddress> url = " << url;
 	
 	string str_result;
 	curl_api_with_header( url, str_result , extra_http_header, post_data , action ) ;
@@ -1764,15 +1748,15 @@ BinaCPP::get_depositAddress(
 			reader.parse( str_result , json_result );
 	    		
 	    	} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP::get_depositAddress> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP::get_depositAddress> Error ! " << e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<BinaCPP::get_depositAddress> Done." ) ;
+		LOG_INFO << "<BinaCPP::get_depositAddress> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<BinaCPP::get_depositAddress> Failed to get anything." ) ;
+		LOG_INFO << "<BinaCPP::get_depositAddress> Failed to get anything.";
 	}
 	
-	BinaCPP_logger::write_log( "<BinaCPP::get_depositAddress> Done.\n" ) ;
+	LOG_INFO << "<BinaCPP::get_depositAddress> Done.\n";
 }
 
 
@@ -1791,11 +1775,11 @@ BinaCPP::get_depositAddress(
 size_t 
 BinaCPP::curl_cb( void *content, size_t size, size_t nmemb, std::string *buffer ) 
 {	
-	BinaCPP_logger::write_log( "<BinaCPP::curl_cb> " ) ;
+	LOG_INFO << "<BinaCPP::curl_cb> ";
 
 	buffer->append((char*)content, size*nmemb);
 
-	BinaCPP_logger::write_log( "<BinaCPP::curl_cb> done" ) ;
+	LOG_INFO << "<BinaCPP::curl_cb> done";
 	return size*nmemb;
 }
 
@@ -1821,7 +1805,7 @@ void
 BinaCPP::curl_api_with_header( string &url, string &str_result, vector <string> &extra_http_header , string &post_data , string &action ) 
 {
 
-	BinaCPP_logger::write_log( "<BinaCPP::curl_api>" ) ;
+	LOG_INFO << "<BinaCPP::curl_api>";
 
 	CURLcode res;
 
@@ -1854,12 +1838,12 @@ BinaCPP::curl_api_with_header( string &url, string &str_result, vector <string> 
 
 		/* Check for errors */ 
 		if ( res != CURLE_OK ) {
-			BinaCPP_logger::write_log( "<BinaCPP::curl_api> curl_easy_perform() failed: %s" , curl_easy_strerror(res) ) ;
+			LOG_INFO << "<BinaCPP::curl_api> curl_easy_perform() failed: " << curl_easy_strerror(res)  ;
 		} 	
 
 	}
 
-	BinaCPP_logger::write_log( "<BinaCPP::curl_api> done" ) ;
+	LOG_INFO << "<BinaCPP::curl_api> done";
 
 }
 

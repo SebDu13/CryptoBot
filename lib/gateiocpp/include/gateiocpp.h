@@ -1,19 +1,6 @@
 #pragma once
 
 #include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <map>
-#include <vector>
-#include <exception>
-
-#include <curl/curl.h>
-#include "json/json.h"
 
 #define GATEIO_HOST "https://api.gateio.ws"
 

@@ -1,9 +1,5 @@
-
-
 #include "binacpp_websocket.h"
-#include "binacpp_logger.h"
-
-
+#include "logger.h"
 
 struct lws_context *BinaCPP_websocket::context = NULL;
 struct lws_protocols BinaCPP_websocket::protocols[] =
@@ -49,7 +45,7 @@ BinaCPP_websocket::event_cb( struct lws *wsi, enum lws_callback_reasons reason, 
 				}
 
 			} catch ( exception &e ) {
-		 		BinaCPP_logger::write_log( "<BinaCPP_websocket::event_cb> Error ! %s", e.what() ); 
+		 		LOG_INFO <<  "<BinaCPP_websocket::event_cb> Error ! " << e.what(); 
 			}   	
 			break;
 
@@ -132,7 +128,7 @@ BinaCPP_websocket::enter_event_loop()
 		try {	
 			lws_service( context, 500 );
 		} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<BinaCPP_websocket::enter_event_loop> Error ! %s", e.what() ); 
+		 	LOG_INFO << "<BinaCPP_websocket::enter_event_loop> Error ! %s" << e.what() ; 
 		 	break;
 		}
 	}

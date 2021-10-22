@@ -1,7 +1,4 @@
-
-
-#ifndef BINACPP_UTILS
-#define BINACPP_UTILS
+#pragma once
 
 #include <unistd.h>
 #include <string>
@@ -34,4 +31,3 @@ string sha256( const char *data );
 void string_toupper( string &src);
 string string_toupper( const char *cstr );
 
-#endif

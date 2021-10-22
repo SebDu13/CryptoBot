@@ -1,6 +1,20 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <map>
+#include <vector>
+#include <exception>
+
+#include <curl/curl.h>
+#include "json/json.h"
 #include "gateiocpp.h"
-#include "binacpp_logger.h"
-#include "binacpp_utils.h"
+#include "logger.h"
+
+#include "binacpp.h"
 
 using namespace std;
 
@@ -35,7 +49,7 @@ GateIoCPP::cleanup()
 void 
 GateIoCPP::get_currency_pairs( Json::Value &json_result)
 {
-	BinaCPP_logger::write_log( "<GateIoCPP::currency_pairs>" ) ;
+	LOG_INFO <<  "<GateIoCPP::currency_pairs>";
 
 	string url(GATEIO_HOST);  
 	url += "/api/v4/spot/currency_pairs";
@@ -51,12 +65,12 @@ GateIoCPP::get_currency_pairs( Json::Value &json_result)
 			reader.parse( str_result , json_result );
 	    		
 		} catch ( exception &e ) {
-		 	BinaCPP_logger::write_log( "<GateIoCPP::currency_pairs> Error ! %s", e.what() ); 
+		 	LOG_INFO <<  "<GateIoCPP::currency_pairs> Error ! " << e.what(); 
 		}   
-		BinaCPP_logger::write_log( "<GateIoCPP::currency_pairs> Done." ) ;
+		LOG_INFO <<  "<GateIoCPP::currency_pairs> Done.";
 	
 	} else {
-		BinaCPP_logger::write_log( "<GateIoCPP::currency_pairs> Failed to get anything." ) ;
+		LOG_INFO <<  "<GateIoCPP::currency_pairs> Failed to get anything.";
 	}
 }
 
@@ -65,11 +79,11 @@ GateIoCPP::get_currency_pairs( Json::Value &json_result)
 size_t 
 GateIoCPP::curl_cb( void *content, size_t size, size_t nmemb, std::string *buffer ) 
 {	
-	BinaCPP_logger::write_log( "<GateIoCPP::curl_cb> " ) ;
+	LOG_INFO <<  "<GateIoCPP::curl_cb> ";
 
 	buffer->append((char*)content, size*nmemb);
 
-	BinaCPP_logger::write_log( "<GateIoCPP::curl_cb> done" ) ;
+	LOG_INFO <<  "<GateIoCPP::curl_cb> done";
 	return size*nmemb;
 }
 
@@ -95,7 +109,7 @@ void
 GateIoCPP::curl_api_with_header( string &url, string &str_result, vector <string> &extra_http_header , string &post_data , string &action ) 
 {
 
-	BinaCPP_logger::write_log( "<GateIoCPP::curl_api>" ) ;
+	LOG_INFO <<  "<GateIoCPP::curl_api>";
 
 	CURLcode res;
 
@@ -128,12 +142,12 @@ GateIoCPP::curl_api_with_header( string &url, string &str_result, vector <string
 
 		/* Check for errors */ 
 		if ( res != CURLE_OK ) {
-			BinaCPP_logger::write_log( "<GateIoCPP::curl_api> curl_easy_perform() failed: %s" , curl_easy_strerror(res) ) ;
+			LOG_INFO <<  "<GateIoCPP::curl_api> curl_easy_perform() failed: " << curl_easy_strerror(res);
 		} 	
 
 	}
 
-	BinaCPP_logger::write_log( "<GateIoCPP::curl_api> done" ) ;
+	LOG_INFO <<  "<GateIoCPP::curl_api> done";
 
 }
 

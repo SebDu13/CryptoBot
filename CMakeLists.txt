@@ -5,6 +5,9 @@ project(CryptoBot2)
 set(CMAKE_BUILD_TYPE Debug)
 
 find_package(OpenSSL REQUIRED)
+find_package(Boost REQUIRED COMPONENTS log log_setup)
+
+add_definitions(-std=c++17 -DBOOST_LOG_DYN_LINK)
 
 set(BINANCE_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/binacpp/)
 set(BINANCE_INCLUDE_DIR ${BINANCE_LIB_DIR}/include)
@@ -12,6 +15,16 @@ set(GATEIO_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/gateiocpp/)
 set(GATEIO_INCLUDE_DIR ${GATEIO_LIB_DIR}/include)
 set(JSONCPP_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/jsoncpp-1.8.3/)
 set(JSONCPP_INCLUDE_DIR ${JSONCPP_LIB_DIR}/include)
+set(TOOLS_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/tools/)
+set(TOOLS_INCLUDE_DIR ${TOOLS_LIB_DIR}/include)
+
+file(GLOB TOOLS_SOURCES ${TOOLS_LIB_DIR}/src/*.cpp)
+file(GLOB TOOLS_HEADERS ${TOOLS_LIB_DIR}/include/*.h)
+add_library(
+	tools
+	${TOOLS_HEADERS}
+	${TOOLS_SOURCES}
+)
 
 file(GLOB JSON_SOURCES ${JSONCPP_LIB_DIR}/src/*.cpp)
 file(GLOB JSON_HEADERS ${JSONCPP_LIB_DIR}/include/*.h)
@@ -38,9 +51,11 @@ add_library(
 )
 
 include_directories(
+  ${TOOLS_INCLUDE_DIR}
   ${JSONCPP_INCLUDE_DIR}
   ${BINANCE_INCLUDE_DIR}
   ${GATEIO_INCLUDE_DIR}
+  ${Boost_INCLUDE_DIR}
 )
 
 add_executable(
@@ -50,10 +65,12 @@ add_executable(
 
 target_link_libraries (
 	${PROJECT_NAME}
+	${Boost_LIBRARIES}
 	jsoncpp
 	binance
 	gateio
+	tools
 	curl
 	OpenSSL::Crypto
-	websockets
 )
+
