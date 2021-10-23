@@ -1,6 +1,6 @@
 
 #include "binacpp.h"
-#include "logger.h"
+#include "logger.hpp"
 #include "binacpp_utils.h"
 
 
@@ -960,13 +960,12 @@ BinaCPP::send_order(
 	post_data.append( "&signature=");
 	post_data.append( signature );
 
-
 	vector <string> extra_http_header;
 	string header_chunk("X-MBX-APIKEY: ");
 	header_chunk.append( api_key );
 	extra_http_header.push_back(header_chunk);
 
-	LOG_INFO << "<BinaCPP::send_order> url = |%s|, post_data = |%s|" , url.c_str(), post_data.c_str();
+	LOG_INFO << "<BinaCPP::send_order> url = " << url << " post_data = " << post_data.c_str();
 	
 	string str_result;
 	curl_api_with_header( url, str_result , extra_http_header, post_data, action ) ;
@@ -979,7 +978,7 @@ BinaCPP::send_order(
 			reader.parse( str_result , json_result );
 	    		
 	    	} catch ( exception &e ) {
-		 	LOG_INFO << "<BinaCPP::send_order> Error ! %s", e.what(); 
+		 	LOG_INFO << "<BinaCPP::send_order> Error ! " << e.what(); 
 		}   
 		LOG_INFO << "<BinaCPP::send_order> Done.";
 	
@@ -1073,7 +1072,7 @@ BinaCPP::get_order(
 			reader.parse( str_result , json_result );
 	    		
 	    	} catch ( exception &e ) {
-		 	LOG_INFO << "<BinaCPP::get_order> Error ! %s", e.what(); 
+		 	LOG_INFO << "<BinaCPP::get_order> Error ! " << e.what(); 
 		}   
 		LOG_INFO << "<BinaCPP::get_order> Done.";
 	

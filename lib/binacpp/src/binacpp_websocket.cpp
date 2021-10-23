@@ -1,5 +1,5 @@
 #include "binacpp_websocket.h"
-#include "logger.h"
+#include "logger.hpp"
 
 struct lws_context *BinaCPP_websocket::context = NULL;
 struct lws_protocols BinaCPP_websocket::protocols[] =

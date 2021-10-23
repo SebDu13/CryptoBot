@@ -1,4 +1,4 @@
-#include "logger.h"
+#include "logger.hpp"
 #include <boost/log/expressions.hpp>
 #include <boost/log/support/date_time.hpp>
 #include <boost/log/utility/setup.hpp>
@@ -17,8 +17,6 @@ void Logger::init(FilterLevel filterLevel)
     else
     boost::log::core::get()->set_filter(boost::log::trivial::warning <= boost::log::trivial::severity);
 
-    //boost::log::core::get()->add_global_attribute("ThreadID", boost::log::attributes::current_thread_id());
-
     // log format: [TimeStamp] [Severity Level] Log message
     auto fmtTimeStamp = boost::log::expressions::
     format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S:%f");
@@ -34,6 +32,6 @@ void Logger::init(FilterLevel filterLevel)
     % fmtSeverity
     % boost::log::expressions::smessage;
 
-    auto console_sink = boost::log::add_console_log(std::clog);
+    auto console_sink = boost::log::add_console_log(std::cout);
     console_sink->set_formatter(logFmt);
 }
