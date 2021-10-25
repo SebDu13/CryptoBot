@@ -2,6 +2,7 @@
 #include "binacpp.h"
 #include "logger.hpp"
 #include "binacpp_utils.h"
+#include "chrono.hpp"
 
 
 string BinaCPP::api_key = "";
@@ -33,6 +34,8 @@ BinaCPP::cleanup()
 void 
 BinaCPP::get_exchangeInfo( Json::Value &json_result)
 {
+	CHRONO_THIS_FUNCTION;
+
 	LOG_INFO << "<BinaCPP::get_exchangeInfo>";
 
 	string url(BINANCE_HOST);  
@@ -1815,6 +1818,7 @@ BinaCPP::curl_api_with_header( string &url, string &str_result, vector <string> 
 		curl_easy_setopt(BinaCPP::curl, CURLOPT_WRITEDATA, &str_result );
 		curl_easy_setopt(BinaCPP::curl, CURLOPT_SSL_VERIFYPEER, false);
 		curl_easy_setopt(BinaCPP::curl, CURLOPT_ENCODING, "gzip");
+		//curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
 		if ( extra_http_header.size() > 0 ) {
 			

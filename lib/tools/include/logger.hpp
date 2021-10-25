@@ -2,9 +2,11 @@
 
 #include <boost/log/trivial.hpp>
 
-#define __FILENAME__ std::max<const char*>(__FILE__,\
-    std::max(strrchr(__FILE__, '\\')+1, strrchr(__FILE__, '/')+1))
-#define LOG_LOCATION std::string("") + __FILENAME__ + ":" + std::to_string(__LINE__) + " " + __FUNCTION__ + " "
+#define JUST_FILENAME(f) std::max<const char*>(f,\
+    std::max(strrchr(f, '\\')+1, strrchr(f, '/')+1))
+
+#define LOG_LOCATION_PARAM(file, line, function) std::string("[") + JUST_FILENAME(file) + ":" + std::to_string(line) + "] [" + function + "] "
+#define LOG_LOCATION LOG_LOCATION_PARAM(__FILE__, __LINE__, __FUNCTION__)
 
 #define LOG_DEBUG   BOOST_LOG_SEV(Logger::log, boost::log::trivial::debug) << LOG_LOCATION
 #define LOG_INFO    BOOST_LOG_SEV(Logger::log, boost::log::trivial::info) << LOG_LOCATION

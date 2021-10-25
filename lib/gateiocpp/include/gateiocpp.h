@@ -31,7 +31,7 @@ class GateIoCPP {
 		// Public API
 		static void get_currency_pairs( Json::Value &json_result);
 		static void send_limit_order( 
-			const std::string_view& currency_pair, 
+			const std::string& currency_pair,
 			const Side side,
 			const TimeInForce timeInForce,
 			double quantity,
@@ -49,6 +49,7 @@ class GateIoCPP {
 			,const std::vector <std::string> &extra_http_header
 			,const std::string &post_data
 			,const std::string &action
-			,std::string &str_result); 
+			,std::string &str_result);
+		static std::vector <std::string> generateHttpHeader(const std::string& action, const std::string& prefix, const std::string& body);
 
 };

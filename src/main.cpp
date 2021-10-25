@@ -10,29 +10,47 @@
 #include "binacpp.h"
 #include "gateiocpp.h"
 
+namespace {
+ void setGateIoApiKey(std::string& apiKey, std::string& secretKey)
+ {
+	const char* apiKeyEnv = "GATEIO_K";
+	const char* secretKeyEnv = "GATEIO_S";
+
+	if(auto key = std::getenv(apiKeyEnv))
+		apiKey = std::string(key);
+	else
+		LOG_WARNING << apiKeyEnv << " not set or null";
+
+
+	if(auto key = std::getenv(secretKeyEnv))
+		secretKey = std::string(key);
+	else
+		LOG_WARNING << secretKeyEnv << " not set or null";
+ }
+}
+
 
 int main() 
 {
 	Logger::init(Logger::FilterLevel::Debug);
-	std::string api_key	= "api key";
-	std::string secret_key 	= "user key";
-	BinaCPP::init( api_key , secret_key );
-	GateIoCPP::init( api_key , secret_key );
+	std::string apiKey, secretKey;
+	setGateIoApiKey(apiKey, secretKey);
+
+	//BinaCPP::init( apiKey , secretKey );
+	GateIoCPP::init( apiKey , secretKey );
 
 	Json::Value resultCurrencyPairs;
 	Json::Value resultLimitOrder;
+	Json::Value result;
 	//BinaCPP::get_exchangeInfo(result);
+	//BinaCPP::send_order("","","","sebseb",1,2,"",3,3,3,result);
 	//BinaCPP::get_exchangeInfo(result);
 	//GateIoCPP::get_currency_pairs(result);
 
+	int i=1;
 	do
 	{
-		auto t_start = std::chrono::high_resolution_clock::now();
 		GateIoCPP::get_currency_pairs(resultCurrencyPairs);
-		auto t_end = std::chrono::high_resolution_clock::now();
-		LOG_INFO << "time to get currency_pairs: " << std::chrono::duration<double, std::milli>(t_end-t_start).count();
-		
-		t_start = std::chrono::high_resolution_clock::now();
 		GateIoCPP::send_limit_order("BTC_USDT"
 			,GateIoCPP::Side::buy
 			,GateIoCPP::TimeInForce::ioc
@@ -40,10 +58,9 @@ int main()
 			,60000
 			,resultLimitOrder);
 
-		t_end = std::chrono::high_resolution_clock::now();
-		LOG_INFO << "time to get send_limit_order: " << std::chrono::duration<double, std::milli>(t_end-t_start).count();
 		LOG_INFO << "resultLimitOrder " << resultLimitOrder;
-	}while(false);
+		i--;
+	}while(i>0);
 
 	//cout << result[1]["id"] << endl;
 

@@ -8,7 +8,6 @@
 
 namespace tools
 {
-
     time_t get_current_epoch();
     unsigned long get_current_ms_epoch();
 
@@ -19,5 +18,4 @@ namespace tools
 
     std::string sha256( const char *data );
     std::string sha512( const char *data );
-    
 }

@@ -14,8 +14,9 @@
 #include "logger.hpp"
 #include "magic_enum.hpp"
 #include "sha.hpp"
+#include "chrono.hpp"
 
-//---------------------------------
+
 void GateIoCPP::init( std::string &api_key, std::string &secret_key ) 
 {
 	LOG_INFO <<  "with api_key " << api_key;
@@ -33,12 +34,10 @@ void GateIoCPP::cleanup()
 	curl_global_cleanup();
 }
 
-//------------------
-//GET api/v1/exchangeInfo
-//------------------
 void GateIoCPP::get_currency_pairs( Json::Value &json_result)
 {
 	LOG_DEBUG;
+	CHRONO_THIS_FUNCTION;
 
 	std::string url(GATEIO_HOST);  
 	url += "/api/v4/spot/currency_pairs";
@@ -46,25 +45,14 @@ void GateIoCPP::get_currency_pairs( Json::Value &json_result)
 	std::string str_result;
 	curl_api( url, str_result ) ;
 
-	if ( str_result.size() > 0 ) {
-		
-		try {
-			Json::Reader reader;
-			json_result.clear();	
-			reader.parse( str_result , json_result );
-	    		
-		} catch ( std::exception &e ) {
-		 	LOG_ERROR <<  "Error ! " << e.what(); 
-		}   
-		LOG_DEBUG <<  "Done.";
-	
-	} else {
+	if ( str_result.size() <= 0 )
 		LOG_ERROR <<  "Failed to get anything.";
-	}
+
+	LOG_DEBUG <<  "Done.";
 }
 
 void GateIoCPP::send_limit_order( 
-	const std::string_view& currency_pair, 
+	const std::string& currency_pair, 
 	const Side side,
 	const TimeInForce timeInForce,
 	double quantity,
@@ -72,6 +60,7 @@ void GateIoCPP::send_limit_order(
 	Json::Value &json_result )
 {
 	LOG_DEBUG;
+	CHRONO_THIS_FUNCTION;
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 )
 	{
@@ -81,76 +70,39 @@ void GateIoCPP::send_limit_order(
 
 	std::string url(GATEIO_HOST);
 	std::string prefix("/api/v4/spot/orders");
-	
 	url += prefix;
 
 	std::string action("POST");
 
-	//body='{"text":"t-123456","currency_pair":"ETH_BTC","type":"limit","account":"spot"
-	//,"side":"buy","iceberg":"0","amount":"1","price":"5.00032","time_in_force":"gtc","auto_borrow":false}'
+	Json::Value bodyJson;
+	bodyJson["text"] = """";
+	bodyJson["currency_pair"] = currency_pair;
+	bodyJson["type"] = "limit";
+	bodyJson["account"] = "spot";
+	bodyJson["side"] = std::string(magic_enum::enum_name(side));
+	bodyJson["iceberg"] = "0";
+	bodyJson["amount"] = quantity;
+	bodyJson["price"] = price;
+	bodyJson["time_in_force"] = std::string(magic_enum::enum_name(timeInForce));
+	bodyJson["auto_borrow"] = false;
+
+	std::string body = bodyJson.toStyledString();
+
+	LOG_DEBUG << "url = " << url << " body = " << body;
 	
-	std::stringstream post_data;
-	post_data << "currency_pair=" << currency_pair;
-	post_data << ",type=limit"; /* only limit order available in gateio api */
-	post_data << ",account=spot";
-	post_data << ",side=" << magic_enum::enum_name(side);
-	post_data << ",iceberg=0";
-	post_data << ",amount=" << quantity;
-	post_data << ",price=" << price;
-	post_data << ",time_in_force=" << magic_enum::enum_name(timeInForce);
+	const auto httpHeader = generateHttpHeader(action, prefix, body);
 
-	std::string bodyHash = tools::sha512(post_data.str().c_str());
-
-	auto timeStamp = tools::get_current_epoch();
-	std::stringstream sign;
-	sign << action << std::endl;
-	sign << prefix << std::endl;
-	sign << "" << std::endl; /* supposed to be query param */ 
-	sign << bodyHash << std::endl;
-	sign << timeStamp;
-
-	std::string signHash = tools::hmac_sha512(secret_key.c_str(), sign.str().c_str());
-	std::vector <std::string> extra_http_header{
-		"Content-Type: application/json"
-		,"Timestamp: " + std::to_string(timeStamp)
-		,"KEY: " + api_key
-		,"SIGN: " + signHash};
-
-
-	LOG_DEBUG << "url = " << url << " post_data = " << post_data.str();
-	
-	std::string result;
-	curl_api_with_header( url, extra_http_header, post_data.str(), action, result ) ;
-
-	if ( result.size() > 0 ) 
-	{
-		try 
-		{
-			Json::Reader reader;
-			json_result.clear();	
-			reader.parse( result , json_result );
-	    		
-	    } 
-		catch ( std::exception &e ) 
-		{
-		 	LOG_ERROR << " Error ! " << e.what(); 
-		}   
-		LOG_DEBUG << "Done.";
-	} 
-	else 
+	curl_api_with_header( url, httpHeader, body, action, json_result ) ; // TODO revert ici et plus haut pour convertir le résultat en json
+	if ( json_result.size() <= 0 ) 
 		LOG_ERROR << "Failed to get anything.";
 	
-	LOG_INFO << "Done.\n";
+	LOG_INFO << "Done.";
 }
 
 
 size_t GateIoCPP::curl_cb( void *content, size_t size, size_t nmemb, std::string *buffer ) 
 {	
-	LOG_DEBUG;
-
 	buffer->append((char*)content, size*nmemb);
-
-	LOG_DEBUG << "done";
 	return size*nmemb;
 }
 
@@ -159,7 +111,28 @@ void GateIoCPP::curl_api( std::string &url, std::string &result_json ) {
 	std::string action = "GET";
 	std::string post_data = "";
 	curl_api_with_header( url , v, post_data , action, result_json );	
-} 
+}
+
+std::vector <std::string> GateIoCPP::generateHttpHeader(const std::string& action, const std::string& prefix, const std::string& body)
+{
+	std::string bodyHash = tools::sha512(body.c_str());
+	auto timeStamp = tools::get_current_epoch();
+
+	std::stringstream sign;
+	sign << action << std::endl;
+	sign << prefix << std::endl;
+	sign << "" << std::endl; /* supposed to be query param */ 
+	sign << bodyHash << std::endl;
+	sign << timeStamp;
+
+	std::string signHash = tools::hmac_sha512(secret_key.c_str(), sign.str().c_str());
+
+	return std::vector <std::string>{
+		"Content-Type: application/json"
+		,"Timestamp: " + std::to_string(timeStamp)
+		,"KEY: " + api_key
+		,"SIGN: " + signHash};
+}
 
 void GateIoCPP::curl_api_with_header(const std::string &url
 			,const std::vector <std::string> &extra_http_header
@@ -167,17 +140,17 @@ void GateIoCPP::curl_api_with_header(const std::string &url
 			,const std::string &action
 			, std::string &str_result)
 {
-	LOG_DEBUG;
-
+	CHRONO_THIS_FUNCTION;
 	CURLcode res;
 
-	if( GateIoCPP::curl ) {
+	if( curl ) {
 
-		curl_easy_setopt(GateIoCPP::curl, CURLOPT_URL, url.c_str() );
-		curl_easy_setopt(GateIoCPP::curl, CURLOPT_WRITEFUNCTION, GateIoCPP::curl_cb);
-		curl_easy_setopt(GateIoCPP::curl, CURLOPT_WRITEDATA, &str_result );
-		curl_easy_setopt(GateIoCPP::curl, CURLOPT_SSL_VERIFYPEER, false);
-		curl_easy_setopt(GateIoCPP::curl, CURLOPT_ENCODING, "gzip");
+		curl_easy_setopt(curl, CURLOPT_URL, url.c_str() );
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, GateIoCPP::curl_cb);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &str_result );
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
+		curl_easy_setopt(curl, CURLOPT_ENCODING, "gzip");
+		//curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
 		if ( extra_http_header.size() > 0 ) {
 			
@@ -204,9 +177,6 @@ void GateIoCPP::curl_api_with_header(const std::string &url
 		} 	
 
 	}
-
-	LOG_DEBUG <<  "done";
-
 }
 
 
