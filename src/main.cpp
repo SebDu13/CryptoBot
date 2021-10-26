@@ -37,7 +37,7 @@ int main()
 	setGateIoApiKey(apiKey, secretKey);
 
 	//BinaCPP::init( apiKey , secretKey );
-	GateIoCPP::init( apiKey , secretKey );
+	GateIoCPP gateIoAPI( apiKey , secretKey );
 
 	Json::Value resultCurrencyPairs;
 	Json::Value resultLimitOrder;
@@ -45,24 +45,33 @@ int main()
 	//BinaCPP::get_exchangeInfo(result);
 	//BinaCPP::send_order("","","","sebseb",1,2,"",3,3,3,result);
 	//BinaCPP::get_exchangeInfo(result);
-	//GateIoCPP::get_currency_pairs(result);
+	//gateIoAPI.get_currency_pairs(result);
 
 	int i=1;
 	do
 	{
-		GateIoCPP::get_currency_pairs(resultCurrencyPairs);
-		GateIoCPP::send_limit_order("BTC_USDT"
-			,GateIoCPP::Side::buy
-			,GateIoCPP::TimeInForce::ioc
+		gateIoAPI.get_currency_pairs(resultCurrencyPairs);
+		//LOG_INFO << "resultCurrencyPairs " << resultCurrencyPairs;
+
+		gateIoAPI.send_limit_order("BTC_USDT"
+			,gateIoAPI.Side::buy
+			,gateIoAPI.TimeInForce::ioc
 			,0.0001
 			,60000
 			,resultLimitOrder);
-
 		LOG_INFO << "resultLimitOrder " << resultLimitOrder;
+
+		gateIoAPI.get_spot_tickers("BTC_USDT", result);
+		LOG_INFO << "result get_spot_tickers " << result;
 		i--;
 	}while(i>0);
 
 	//cout << result[1]["id"] << endl;
+
+	/*for(const auto& val: resultCurrencyPairs)
+	{
+		LOG_DEBUG << val["id"];
+	}*/
 
 	/*for(const auto& val : result["symbols"])
 	{
@@ -70,6 +79,5 @@ int main()
  		cout << val["quoteAsset"] << endl;
  		break;
 	}*/
-
 	return 0;	
 }

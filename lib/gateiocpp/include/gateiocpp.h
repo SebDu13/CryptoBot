@@ -1,12 +1,12 @@
 #pragma once
 
 #include <string>
-
-#define GATEIO_HOST "https://api.gateio.ws"
-
+#include "json/json.h"
+#include <curl/curl.h>
 
 class GateIoCPP {
 	public:
+		/* Names match with the api parameters, do not rename */
 		enum class Side
 		{
 			buy,
@@ -25,31 +25,34 @@ class GateIoCPP {
 			poc
 		};
 
-		static void init( std::string &api_key, std::string &secret_key);
-		static void cleanup();
+		 GateIoCPP( std::string &api_key, std::string &secret_key);
+		 virtual ~GateIoCPP();
+		 void cleanup();
 
 		// Public API
-		static void get_currency_pairs( Json::Value &json_result);
-		static void send_limit_order( 
+		 void get_currency_pairs( Json::Value &json_result);
+		 void send_limit_order( 
 			const std::string& currency_pair,
 			const Side side,
 			const TimeInForce timeInForce,
 			double quantity,
 			double price,
 			Json::Value &json_result );
+		 void get_spot_tickers(const std::string& currencyPair, Json::Value &json_result);
 
 		private:
-		inline static std::string api_key = "";
-		inline static std::string secret_key = "";
-		inline static CURL* curl = NULL;
+		std::string api_key = "";
+		std::string secret_key = "";
+		CURL* curl = NULL;
 
-		static size_t curl_cb( void *content, size_t size, size_t nmemb, std::string *buffer ) ;
-		static void curl_api( std::string &url, std::string &result_json );
-		static void curl_api_with_header(const std::string &url
+		 void curl_api( std::string &url, std::string &result_json );
+		 void curl_api_with_header(const std::string &url
 			,const std::vector <std::string> &extra_http_header
 			,const std::string &post_data
 			,const std::string &action
 			,std::string &str_result);
-		static std::vector <std::string> generateHttpHeader(const std::string& action, const std::string& prefix, const std::string& body);
+		 std::vector <std::string> generateSignedHttpHeader(const std::string& action
+		, const std::string& prefix
+		, const std::string& body);
 
 };
