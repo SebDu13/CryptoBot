@@ -6,6 +6,9 @@
 
 class GateIoCPP {
 	public:
+		using CurrencyPairsResult = Json::Value;
+		using SpotTickersResult = Json::Value;
+
 		/* Names match with the api parameters, do not rename */
 		enum class Side
 		{
@@ -30,7 +33,7 @@ class GateIoCPP {
 		 void cleanup();
 
 		// Public API
-		 void get_currency_pairs( Json::Value &json_result);
+		 void get_currency_pairs( CurrencyPairsResult &json_result);
 		 void send_limit_order( 
 			const std::string& currency_pair,
 			const Side side,
@@ -38,7 +41,7 @@ class GateIoCPP {
 			double quantity,
 			double price,
 			Json::Value &json_result );
-		 void get_spot_tickers(const std::string& currencyPair, Json::Value &json_result);
+		 void get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result);
 
 		private:
 		std::string api_key = "";

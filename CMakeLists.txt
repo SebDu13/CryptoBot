@@ -4,10 +4,12 @@ project(CryptoBot2)
 
 set(CMAKE_BUILD_TYPE Debug)
 
+message("Compiler Version: ${CMAKE_CXX_COMPILER}")
+
 find_package(OpenSSL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS log log_setup)
 
-add_definitions(-std=c++17 -DBOOST_LOG_DYN_LINK)
+add_definitions(-std=c++2a -DBOOST_LOG_DYN_LINK)
 
 set(BINANCE_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/binacpp/)
 set(BINANCE_INCLUDE_DIR ${BINANCE_LIB_DIR}/include)

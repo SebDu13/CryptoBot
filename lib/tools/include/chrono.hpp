@@ -2,7 +2,7 @@
 #include <string>
 #include <chrono>
 
-#define CHRONO_THIS_FUNCTION tools::Chrono chrono(__FILE__, __LINE__, __FUNCTION__)
+#define CHRONO_THIS_SCOPE tools::Chrono chrono(__FILE__, __LINE__, __FUNCTION__)
 
 namespace tools
 {

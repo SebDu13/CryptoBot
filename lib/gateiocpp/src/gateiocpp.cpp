@@ -50,10 +50,10 @@ void GateIoCPP::cleanup()
 	curl_global_cleanup();
 }
 
-void GateIoCPP::get_currency_pairs( Json::Value &json_result)
+void GateIoCPP::get_currency_pairs(CurrencyPairsResult &json_result)
 {
 	LOG_DEBUG;
-	CHRONO_THIS_FUNCTION;
+	CHRONO_THIS_SCOPE;
 
 	std::string url(GATEIO_HOST);  
 	url += "/api/v4/spot/currency_pairs";
@@ -78,10 +78,10 @@ void GateIoCPP::get_currency_pairs( Json::Value &json_result)
 		LOG_ERROR <<  "Failed to get anything.";
 }
 
-void GateIoCPP::get_spot_tickers(const std::string& currencyPair, Json::Value &json_result)
+void GateIoCPP::get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result)
 {
 	LOG_DEBUG;
-	CHRONO_THIS_FUNCTION;
+	CHRONO_THIS_SCOPE;
 
 	std::string url(GATEIO_HOST);  
 	url += "/api/v4/spot/tickers?currency_pair=" + currencyPair;
@@ -120,7 +120,7 @@ void GateIoCPP::send_limit_order(
 	Json::Value &json_result )
 {
 	LOG_DEBUG;
-	CHRONO_THIS_FUNCTION;
+	CHRONO_THIS_SCOPE;
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 )
 	{
@@ -202,7 +202,7 @@ void GateIoCPP::curl_api_with_header(const std::string &url
 			,const std::string &action
 			, std::string &str_result)
 {
-	CHRONO_THIS_FUNCTION;
+	CHRONO_THIS_SCOPE;
 	CURLcode res;
 
 	if( curl ) {

@@ -34,7 +34,7 @@ BinaCPP::cleanup()
 void 
 BinaCPP::get_exchangeInfo( Json::Value &json_result)
 {
-	CHRONO_THIS_FUNCTION;
+	CHRONO_THIS_SCOPE;
 
 	LOG_INFO << "<BinaCPP::get_exchangeInfo>";
 

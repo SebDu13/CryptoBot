@@ -1,8 +1,15 @@
 #pragma once
 #include <string>
+#include <stdexcept>
 
 namespace ExchangeController
 {
+    class ExchangeControllerException : public std::runtime_error
+    {
+        public:
+        ExchangeControllerException(const std::string what): std::runtime_error(what){}
+    };
+
     enum class Side
     {
         buy,
@@ -37,8 +44,8 @@ class AbastractExchangeController
 {
     public:
         virtual ~AbastractExchangeController(){};
-        virtual CurrencyPair getNewCurrencyPairSync() const =0;
-        virtual TickerResult getSpotTickerSync(std::string& currency_pair) const =0;
+        virtual CurrencyPair getNewCurrencyPairSync() =0;
+        virtual TickerResult getSpotTicker(std::string& currency_pair) const =0;
         virtual OrderResult sendOrder(std::string& currency_pair, const Side side, double quantity, double price) const  =0;
 };
 
