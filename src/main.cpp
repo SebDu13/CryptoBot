@@ -9,6 +9,7 @@
 #include "logger.hpp"
 #include "binacpp.h"
 #include "gateiocpp.h"
+#include "exchangeController/GateioController.hpp"
 
 namespace {
  void setGateIoApiKey(std::string& apiKey, std::string& secretKey)
@@ -36,19 +37,23 @@ int main()
 	std::string apiKey, secretKey;
 	setGateIoApiKey(apiKey, secretKey);
 
-	//BinaCPP::init( apiKey , secretKey );
-	GateIoCPP gateIoAPI( apiKey , secretKey );
-
-	Json::Value resultCurrencyPairs;
+	std::string resultCurrencyPairs;
 	Json::Value resultLimitOrder;
 	Json::Value result;
+	//BinaCPP::init( apiKey , secretKey );
+	//GateIoCPP gateIoAPI( apiKey , secretKey );
+	//gateIoAPI.get_currency_pairs(resultCurrencyPairs);
+
+	ExchangeController::GateioController gateioController(apiKey, secretKey);
+	gateioController.getNewCurrencyPairSync();
+
 	//BinaCPP::get_exchangeInfo(result);
 	//BinaCPP::send_order("","","","sebseb",1,2,"",3,3,3,result);
 	//BinaCPP::get_exchangeInfo(result);
 	//gateIoAPI.get_currency_pairs(result);
 
 	int i=1;
-	do
+	/*do
 	{
 		gateIoAPI.get_currency_pairs(resultCurrencyPairs);
 		//LOG_INFO << "resultCurrencyPairs " << resultCurrencyPairs;
@@ -64,7 +69,7 @@ int main()
 		gateIoAPI.get_spot_tickers("BTC_USDT", result);
 		LOG_INFO << "result get_spot_tickers " << result;
 		i--;
-	}while(i>0);
+	}while(i>0);*/
 
 	//cout << result[1]["id"] << endl;
 

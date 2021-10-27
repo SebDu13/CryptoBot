@@ -6,7 +6,7 @@
 
 class GateIoCPP {
 	public:
-		using CurrencyPairsResult = Json::Value;
+		using CurrencyPairsResult = std::string; // as CurrencyPairsResult is big, using a JSON make it too slow
 		using SpotTickersResult = Json::Value;
 
 		/* Names match with the api parameters, do not rename */
@@ -33,7 +33,7 @@ class GateIoCPP {
 		 void cleanup();
 
 		// Public API
-		 void get_currency_pairs( CurrencyPairsResult &json_result);
+		 void get_currency_pairs(CurrencyPairsResult &json_result);
 		 void send_limit_order( 
 			const std::string& currency_pair,
 			const Side side,

@@ -50,7 +50,7 @@ void GateIoCPP::cleanup()
 	curl_global_cleanup();
 }
 
-void GateIoCPP::get_currency_pairs(CurrencyPairsResult &json_result)
+void GateIoCPP::get_currency_pairs(CurrencyPairsResult &result)
 {
 	LOG_DEBUG;
 	CHRONO_THIS_SCOPE;
@@ -58,24 +58,7 @@ void GateIoCPP::get_currency_pairs(CurrencyPairsResult &json_result)
 	std::string url(GATEIO_HOST);  
 	url += "/api/v4/spot/currency_pairs";
 
-	std::string str_result;
-	curl_api( url, str_result ) ;
-
-	if ( !str_result.empty() ) {
-		
-		try 
-		{
-			Json::Reader reader;
-			json_result.clear();	
-			reader.parse( str_result , json_result );
-		} 
-		catch ( std::exception &e ) 
-		{
-		 	LOG_ERROR <<  "Error ! " << e.what(); 
-		}   
-	}
-	else
-		LOG_ERROR <<  "Failed to get anything.";
+	curl_api(url,result) ;
 }
 
 void GateIoCPP::get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result)
@@ -85,9 +68,6 @@ void GateIoCPP::get_spot_tickers(const std::string& currencyPair, SpotTickersRes
 
 	std::string url(GATEIO_HOST);  
 	url += "/api/v4/spot/tickers?currency_pair=" + currencyPair;
-
-	//Json::Value bodyJson;
-	//bodyJson["currency_pair"] = currencyPair;
 
 	LOG_DEBUG << "url " << url;
 
@@ -211,7 +191,7 @@ void GateIoCPP::curl_api_with_header(const std::string &url
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_cb);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &str_result );
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
-		//curl_easy_setopt(curl, CURLOPT_ENCODING, "gzip");
+		curl_easy_setopt(curl, CURLOPT_ENCODING, "gzip");
 		//curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
 		if ( extra_http_header.size() > 0 ) {
