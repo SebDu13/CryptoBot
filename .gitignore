@@ -43,3 +43,5 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 
+CryptoBot2
+.vscode/c_cpp_properties.json

@@ -20,7 +20,7 @@ class GateioController: public AbastractExchangeController
     GateIoCPP gateIoAPI;
     std::unordered_set<std::string> allCurrencyPairsCache;
 
-    CurrencyPair findNewPairFrom(const GateIoCPP::CurrencyPairsResult& result) const;
+    std::optional<CurrencyPair> findNewPairFrom(const GateIoCPP::CurrencyPairsResult& result) const;
 };
 
 } /* end ExchangeController namespace */ 

@@ -38,6 +38,13 @@ namespace ExchangeController
         std::string id;
         std::string base;
         std::string quote; // in general USDT
+        //fee
+        //min_quote_amount
+        //amount_precision
+        //precision
+        //trade_status
+        //sell_start
+        //buy_start
     };
 
 class AbastractExchangeController
