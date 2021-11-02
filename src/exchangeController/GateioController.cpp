@@ -3,6 +3,7 @@
 #include "logger.hpp"
 #include <set>
 #include <optional>
+#include <thread>
 
 namespace{
 const std::string idPattern = "\"id\":\"";
@@ -22,8 +23,6 @@ std::string getFieldFromPattern(const std::string& input, const std::string& Pat
 
 std::optional<ExchangeController::CurrencyPair> extractPairFromJson(const GateIoCPP::CurrencyPairsResult& result, std::size_t& offset)
 {
-    CHRONO_THIS_SCOPE;
-  
     offset = result.find("{", offset);
     if(offset != std::string::npos)
     {
@@ -31,33 +30,38 @@ std::optional<ExchangeController::CurrencyPair> extractPairFromJson(const GateIo
         {
             // here pair has to look like: {"id":"IHT_ETH","base":"IHT"," ... }
             const std::string pair = result.substr(offset, next_braket_position-offset);
-            LOG_DEBUG << "pair " << pair;
+            //LOG_DEBUG << "pair " << pair;
             std::string id = getFieldFromPattern(pair, idPattern);
             std::string base = getFieldFromPattern(pair, basePattern);
             std::string quote = getFieldFromPattern(pair, quotePattern);
-            LOG_DEBUG << "id " << id;
-            LOG_DEBUG << "base " << base;
-            LOG_DEBUG << "quote " << quote;
+            //LOG_DEBUG << "id: " << id << " ,base: " << base << " ,quote: " << quote;
             offset +=idPattern.length();
-            return {id, base, quote};
+            return std::optional<ExchangeController::CurrencyPair>({id, base, quote});
         }
     }
     return std::nullopt;
-    //  LOG_ERROR << "Could not extract a pair from result at position " << offset << " with result = " << result;
-    //throw ExchangeController::ExchangeControllerException("extractPairFromJson failed in GateioController. Check log from details");
 }
 
 // We want to extract the pair ID
 // pattern : {"id":"STRONG_USDT","base":"STRONG","quote":"USDT","fee":"0.2","min_quote_amount":"1","amount_precision":3,"precision":2,"trade_status":"tradable","sell_start":0,"buy_start":0},{"id"
 // let's search "id":" and then the next " in order to get SRONG_USDT
-std::unordered_set<std::string> extractPairsfromJson(const GateIoCPP::CurrencyPairsResult& result)
+template<typename Contener>
+Contener extractPairsfromJson(const GateIoCPP::CurrencyPairsResult& result)
 {
     CHRONO_THIS_SCOPE;
 
-    std::unordered_set<std::string> setOfPairs;
+    Contener setOfPairs;
     std::size_t offset=0;
     while(offset < std::string::npos)
-        setOfPairs.emplace(extractPairFromJson(result, offset).id);
+    {
+        if(const auto& pairFromJsonOpt = extractPairFromJson(result, offset))
+            setOfPairs.emplace(pairFromJsonOpt->id);
+        else if(offset < std::string::npos)
+        {
+            LOG_ERROR << "Could not extract a pair from result at position " << offset << " with result = " << result;
+            throw ExchangeController::ExchangeControllerException("extractPairsfromJson failed in GateioController. Check logs from details");
+        }
+    }
 
     return setOfPairs;
 }
@@ -78,11 +82,14 @@ namespace ExchangeController{
 GateioController::GateioController(std::string &api_key, std::string &secret_key):gateIoAPI(api_key, secret_key)
 {
     GateIoCPP::CurrencyPairsResult result;
-    //gateIoAPI.get_currency_pairs(result);
-    result = "{\"id\":\"STRONG_USDT\",\"base\":\"STRONG\",\"quote\":\"USDT\",\"fee\":\"0.2\",\"min_quote_amount\":\"1\",\"amount_precision\":3,\"precision\":2,\"trade_status\":\"tradable\",\"sell_start\":0,\"buy_start\":0},{\"id\":\"POUETTE\",\"base\":\"STRONG\",\"quote\":\"USDT\",\"fee\":\"0.2\",\"min_quote_amount\":\"1\",\"amount_precision\":3,\"precision\":2,\"trade_status\":\"tradable\",\"sell_start\":0,\"buy_start\":0}";
+    gateIoAPI.get_currency_pairs(result);
+    //result = "{\"id\":\"STRONG_USDT\",\"base\":\"STRONG\",\"quote\":\"USDT\",\"fee\":\"0.2\",\"min_quote_amount\":\"1\",\"amount_precision\":3,\"precision\":2,\"trade_status\":\"tradable\",\"sell_start\":0,\"buy_start\":0},{\"id\":\"POUETTE\",\"base\":\"STRONG\",\"quote\":\"USDT\",\"fee\":\"0.2\",\"min_quote_amount\":\"1\",\"amount_precision\":3,\"precision\":2,\"trade_status\":\"tradable\",\"sell_start\":0,\"buy_start\":0}";
     if(!sanityCheck(result))
         throw ExchangeControllerException("Sanity check failed in GateioController()");
-    allCurrencyPairsCache = extractPairsfromJson(result);
+    
+    allCurrencyPairsCache = extractPairsfromJson<decltype(allCurrencyPairsCache)>(result);
+    rawCurrencyPairsResultSize = result.size();
+    LOG_INFO << allCurrencyPairsCache.size() << " currency pairs listed on GateIO"; 
 }
 
 GateioController::~GateioController()
@@ -96,7 +103,7 @@ std::optional<CurrencyPair> GateioController::findNewPairFrom(const GateIoCPP::C
     std::size_t offset=0;
     while(offset < std::string::npos)
     {
-        if(auto currencyPair = extractPairFromJson(result, offset); !allCurrencyPairsCache.contains(currencyPair.id))
+        if(auto currencyPair = extractPairFromJson(result, offset); !allCurrencyPairsCache.contains(currencyPair->id))
             return currencyPair;
     }
     return std::nullopt;
@@ -113,19 +120,28 @@ CurrencyPair GateioController::getNewCurrencyPairSync()
         if(!sanityCheck(result))
             throw ExchangeControllerException("Sanity check failed in GateioController::getNewCurrencyPairSync()");
 
-        if(result.size() < allCurrencyPairsCache.size())
+        if(result.size() < rawCurrencyPairsResultSize)
         {
-            LOG_WARNING << "allCurrencyPairsCache looks like not up to date, result.size() < allCurrencyPairsCache.size() "
+            LOG_WARNING << "allCurrencyPairsCache looks like not up to date, result.size() < rawCurrencyPairsResultSize "
             << result.size() 
             << "<"
-            << allCurrencyPairsCache.size()
+            << rawCurrencyPairsResultSize
             << " reset allCurrencyPairsCache with result";
-            allCurrencyPairsCache = extractPairsfromJson(result);
+            allCurrencyPairsCache = extractPairsfromJson<decltype(allCurrencyPairsCache)>(result);
+            rawCurrencyPairsResultSize = result.size();
         }
-        /*else if(result.size() > allCurrencyPairsCache.size())
+        else if(result.size() > rawCurrencyPairsResultSize)
         {
-            return findNewPairFrom(result);
-        }*/
+            if(const auto& newPair = findNewPairFrom(result))
+                return *newPair;
+            else
+            {
+                LOG_ERROR << "Could not find new pair while result and allCurrencyParisCache sizes are different: "<< result.size() << " vs " << rawCurrencyPairsResultSize 
+                    << std::endl << "result: " << result;
+                LOG_ERROR << "Could not find new pair while result and allCurrencyParisCache sizes are different: "<< result.size() << " vs " << rawCurrencyPairsResultSize;
+                throw ExchangeController::ExchangeControllerException("findNewPairFrom failed in GateioController. Check logs from details");
+            }
+        }
     }
 }
 

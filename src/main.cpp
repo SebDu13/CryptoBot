@@ -45,7 +45,10 @@ int main()
 	//gateIoAPI.get_currency_pairs(resultCurrencyPairs);
 
 	ExchangeController::GateioController gateioController(apiKey, secretKey);
-	gateioController.getNewCurrencyPairSync();
+	auto newpair = gateioController.getNewCurrencyPairSync();
+	LOG_DEBUG << "id " << newpair.id;
+    LOG_DEBUG << "base " << newpair.base;
+    LOG_DEBUG << "quote " << newpair.quote;
 
 	//BinaCPP::get_exchangeInfo(result);
 	//BinaCPP::send_order("","","","sebseb",1,2,"",3,3,3,result);
