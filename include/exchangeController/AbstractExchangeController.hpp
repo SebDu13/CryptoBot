@@ -24,13 +24,13 @@ namespace ExchangeController
 
     struct TickerResult
     {
-        double last;
-        double high24h;
-        double low24h;
-        double baseVolume;
-        double quoteVolume;
-        double lowestAsk;
-        double highestBid;
+        std::string last;
+        std::string high24h;
+        std::string low24h;
+        std::string baseVolume;
+        std::string quoteVolume;
+        std::string lowestAsk;
+        std::string highestBid;
     };
 
     struct CurrencyPair
@@ -52,8 +52,8 @@ class AbastractExchangeController
     public:
         virtual ~AbastractExchangeController(){};
         virtual CurrencyPair getNewCurrencyPairSync() =0;
-        virtual TickerResult getSpotTicker(std::string& currency_pair) const =0;
-        virtual OrderResult sendOrder(std::string& currency_pair, const Side side, double quantity, double price) const  =0;
+        virtual TickerResult getSpotTicker(const std::string& currencyPair) const =0;
+        virtual OrderResult sendOrder(const std::string& currency_pair, const Side side, size_t quantity, const std::string& price) const  =0;
 };
 
 } /* end ExchangeController namespace */ 

@@ -45,11 +45,13 @@ int main()
 	//gateIoAPI.get_currency_pairs(resultCurrencyPairs);
 
 	ExchangeController::GateioController gateioController(apiKey, secretKey);
-	auto newpair = gateioController.getNewCurrencyPairSync();
-	LOG_DEBUG << "id " << newpair.id;
+	//auto newpair = gateioController.getNewCurrencyPairSync();
+	auto spotTicker = gateioController.getSpotTicker("ETH_USDT");
+	auto resultSendOrder = gateioController.sendOrder("ETH_USDT", ExchangeController::Side::buy, 1, "10");
+	/*LOG_DEBUG << "id " << newpair.id;
     LOG_DEBUG << "base " << newpair.base;
-    LOG_DEBUG << "quote " << newpair.quote;
-
+    LOG_DEBUG << "quote " << newpair.quote;*/
+	
 	//BinaCPP::get_exchangeInfo(result);
 	//BinaCPP::send_order("","","","sebseb",1,2,"",3,3,3,result);
 	//BinaCPP::get_exchangeInfo(result);

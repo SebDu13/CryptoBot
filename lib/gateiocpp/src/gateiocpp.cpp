@@ -61,7 +61,7 @@ void GateIoCPP::get_currency_pairs(CurrencyPairsResult &result)
 	curl_api(url,result) ;
 }
 
-void GateIoCPP::get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result)
+void GateIoCPP::get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result) const
 {
 	LOG_DEBUG;
 	CHRONO_THIS_SCOPE;
@@ -91,13 +91,13 @@ void GateIoCPP::get_spot_tickers(const std::string& currencyPair, SpotTickersRes
 		LOG_ERROR <<  "Failed to get anything.";
 }
 
-void GateIoCPP::send_limit_order( 
+void GateIoCPP::send_limit_order ( 
 	const std::string& currency_pair, 
 	const Side side,
 	const TimeInForce timeInForce,
-	double quantity,
-	double price,
-	Json::Value &json_result )
+	size_t quantity,
+	const std::string& price,
+	Json::Value &json_result ) const
 {
 	LOG_DEBUG;
 	CHRONO_THIS_SCOPE;
@@ -150,12 +150,12 @@ void GateIoCPP::send_limit_order(
 		LOG_ERROR << "Failed to get anything.";
 }
 
-void GateIoCPP::curl_api( std::string &url, std::string &result_json ) 
+void GateIoCPP::curl_api( std::string &url, std::string &result_json ) const
 {
 	curl_api_with_header( url , {}, "" , "GET", result_json );	
 }
 
-std::vector <std::string> GateIoCPP::generateSignedHttpHeader(const std::string& action, const std::string& prefix, const std::string& body)
+std::vector <std::string> GateIoCPP::generateSignedHttpHeader(const std::string& action, const std::string& prefix, const std::string& body) const
 {
 	std::string bodyHash = tools::sha512(body.c_str());
 	auto timeStamp = tools::get_current_epoch();
@@ -180,7 +180,7 @@ void GateIoCPP::curl_api_with_header(const std::string &url
 			,const std::vector <std::string> &extra_http_header
 			,const std::string &post_data
 			,const std::string &action
-			, std::string &str_result)
+			, std::string &str_result) const
 {
 	CHRONO_THIS_SCOPE;
 	CURLcode res;
@@ -207,10 +207,7 @@ void GateIoCPP::curl_api_with_header(const std::string &url
 			curl_easy_setopt(GateIoCPP::curl, CURLOPT_CUSTOMREQUEST, action.c_str() );
 
 		if(!post_data.empty() || action == "POST")
-		{
-			LOG_ERROR << "post_data " << post_data << " action " << action;
 			curl_easy_setopt(GateIoCPP::curl, CURLOPT_POSTFIELDS, post_data.c_str() );
-		}
 
 		res = curl_easy_perform(GateIoCPP::curl);
 		curl_easy_reset(curl); // reset the options

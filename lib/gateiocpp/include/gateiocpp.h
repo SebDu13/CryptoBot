@@ -34,28 +34,28 @@ class GateIoCPP {
 
 		// Public API
 		 void get_currency_pairs(CurrencyPairsResult &json_result);
-		 void send_limit_order( 
+		 void send_limit_order ( 
 			const std::string& currency_pair,
 			const Side side,
 			const TimeInForce timeInForce,
-			double quantity,
-			double price,
-			Json::Value &json_result );
-		 void get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result);
+			size_t quantity,
+			const std::string& price,
+			Json::Value &json_result ) const;
+		 void get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result) const;
 
 		private:
 		std::string api_key = "";
 		std::string secret_key = "";
 		CURL* curl = NULL;
 
-		 void curl_api( std::string &url, std::string &result_json );
+		 void curl_api( std::string &url, std::string &result_json ) const;
 		 void curl_api_with_header(const std::string &url
 			,const std::vector <std::string> &extra_http_header
 			,const std::string &post_data
 			,const std::string &action
-			,std::string &str_result);
+			,std::string &str_result) const;
 		 std::vector <std::string> generateSignedHttpHeader(const std::string& action
 		, const std::string& prefix
-		, const std::string& body);
+		, const std::string& body) const;
 
 };

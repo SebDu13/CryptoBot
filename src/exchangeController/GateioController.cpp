@@ -1,14 +1,25 @@
 #include "exchangeController/GateioController.hpp"
 #include "chrono.hpp"
 #include "logger.hpp"
-#include <set>
 #include <optional>
-#include <thread>
+#include "boost/lexical_cast.hpp"
+#include "magic_enum.hpp"
 
 namespace{
 const std::string idPattern = "\"id\":\"";
 const std::string basePattern = "\"base\":\"";
 const std::string quotePattern = "\"quote\":\"";
+
+GateIoCPP::Side convertFrom(ExchangeController::Side side)
+{
+    switch (side)
+    {
+    case ExchangeController::Side::buy: return GateIoCPP::Side::buy;
+    case ExchangeController::Side::sell: return GateIoCPP::Side::sell;
+    default:
+        throw("define " + std::string(magic_enum::enum_name(side)) + "here: GateIoCPP::Side convertFrom(ExchangeController::Side side)");
+    }
+}
 
 // in the sequence below, for an "id" pattern we want to return IHT_ETH
 //{"id":"IHT_ETH","base":"IHT","quote":"ETH","fee":"0.2","min_quote_amount":"0.001","amount_precision":1,"precision":9,"trade_status":"tradable","sell_start":0,"buy_start":0}
@@ -138,20 +149,32 @@ CurrencyPair GateioController::getNewCurrencyPairSync()
             {
                 LOG_ERROR << "Could not find new pair while result and allCurrencyParisCache sizes are different: "<< result.size() << " vs " << rawCurrencyPairsResultSize 
                     << std::endl << "result: " << result;
-                LOG_ERROR << "Could not find new pair while result and allCurrencyParisCache sizes are different: "<< result.size() << " vs " << rawCurrencyPairsResultSize;
                 throw ExchangeController::ExchangeControllerException("findNewPairFrom failed in GateioController. Check logs from details");
             }
         }
     }
 }
 
-TickerResult GateioController::getSpotTicker(std::string& currency_pair) const
+TickerResult GateioController::getSpotTicker(const std::string& currencyPair) const
 {
-    return TickerResult();
+    CHRONO_THIS_SCOPE;
+    GateIoCPP::SpotTickersResult result;
+    gateIoAPI.get_spot_tickers(currencyPair, result);
+
+    return {result[0]["last"].asString()
+        , result[0]["high_24h"].asString()
+        , result[0]["low_24h"].asString()
+        , result[0]["base_volume"].asString()
+        , result[0]["quote_volume"].asString()
+        , result[0]["lowest_ask"].asString()
+        , result[0]["highest_bid"].asString()};
 }
 
-OrderResult GateioController::sendOrder(std::string& currency_pair, const Side side, double quantity, double price) const
+OrderResult GateioController::sendOrder(const std::string& currencyPair, const Side side, size_t quantity, const std::string& price) const
 {
+    Json::Value result;
+    gateIoAPI.send_limit_order(currencyPair, convertFrom(side), GateIoCPP::TimeInForce::ioc, quantity, price, result);
+    LOG_DEBUG << result;
     return OrderResult();
 }
 

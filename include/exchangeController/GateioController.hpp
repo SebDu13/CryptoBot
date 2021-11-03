@@ -13,8 +13,8 @@ class GateioController: public AbastractExchangeController
         GateioController(std::string &api_key, std::string &secret_key);
         virtual ~GateioController();
         CurrencyPair getNewCurrencyPairSync() override;
-        TickerResult getSpotTicker(std::string& currency_pair) const override;
-        OrderResult sendOrder(std::string& currency_pair, const Side side, double quantity, double price) const override;
+        TickerResult getSpotTicker(const std::string& currencyPair) const override;
+        OrderResult sendOrder(const std::string& currency_pair, const Side side, size_t quantity, const std::string& price) const override;
 
     private:
     GateIoCPP gateIoAPI;
