@@ -7,21 +7,21 @@
 
 namespace ExchangeController{
 
-class GateioController: public AbastractExchangeController
+class GateioController: public AbstractExchangeController
 {
     public:
         GateioController(std::string &api_key, std::string &secret_key);
         virtual ~GateioController();
-        CurrencyPair getNewCurrencyPairSync() override;
+        CurrencyPair getNewCurrencyPairSync(const std::string& quote) const override;
         TickerResult getSpotTicker(const std::string& currencyPair) const override;
-        OrderResult sendOrder(const std::string& currency_pair, const Side side, size_t quantity, const std::string& price) const override;
+        OrderResult sendOrder(const std::string& currency_pair, const Side side, double quantity, double price) const override;
 
     private:
     GateIoCPP gateIoAPI;
     std::unordered_set<std::string> allCurrencyPairsCache;
     std::size_t rawCurrencyPairsResultSize;
 
-    std::optional<CurrencyPair> findNewPairFrom(const GateIoCPP::CurrencyPairsResult& result) const;
+    std::optional<CurrencyPair> findNewPairFrom(const GateIoCPP::CurrencyPairsResult& result, const std::string& quote) const;
 };
 
 } /* end ExchangeController namespace */ 

@@ -33,13 +33,13 @@ class GateIoCPP {
 		 void cleanup();
 
 		// Public API
-		 void get_currency_pairs(CurrencyPairsResult &json_result);
+		 void get_currency_pairs(CurrencyPairsResult &json_result) const;
 		 void send_limit_order ( 
 			const std::string& currency_pair,
 			const Side side,
 			const TimeInForce timeInForce,
-			size_t quantity,
-			const std::string& price,
+			long quantity,
+			long price,
 			Json::Value &json_result ) const;
 		 void get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result) const;
 

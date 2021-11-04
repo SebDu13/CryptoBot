@@ -6,32 +6,40 @@
 #include <boost/log/attributes/current_thread_id.hpp>
 #include <boost/log/attributes/attribute.hpp>
 
+using namespace boost::log;
+
 void Logger::init(FilterLevel filterLevel) 
 {
-    boost::log::add_common_attributes();
+    add_common_attributes();
 
     if (filterLevel == FilterLevel::Debug)
-    boost::log::core::get()->set_filter(boost::log::trivial::debug <= boost::log::trivial::severity);
+    core::get()->set_filter(trivial::debug <= trivial::severity);
     else if (filterLevel == FilterLevel::Verbose)
-    boost::log::core::get()->set_filter(boost::log::trivial::info <= boost::log::trivial::severity);
+    core::get()->set_filter(trivial::info <= trivial::severity);
     else
-    boost::log::core::get()->set_filter(boost::log::trivial::warning <= boost::log::trivial::severity);
+    core::get()->set_filter(trivial::warning <= trivial::severity);
 
     // log format: [TimeStamp] [Severity Level] Log message
-    auto fmtTimeStamp = boost::log::expressions::
+    auto fmtTimeStamp = expressions::
     format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S:%f");
-    auto fmtSeverity = boost::log::expressions::
-    attr<boost::log::trivial::severity_level>("Severity");
-    auto fmtThreadID = boost::log::expressions::
-    attr<boost::log::attributes::current_thread_id::value_type>("ThreadID");
+    auto fmtSeverity = expressions::
+    attr<trivial::severity_level>("Severity");
+    auto fmtThreadID = expressions::
+    attr<attributes::current_thread_id::value_type>("ThreadID");
 
-    boost::log::formatter logFmt =
-    boost::log::expressions::format("[%1%] [%2%] [%3%] %4%")
+    formatter logFmt =
+    expressions::format("[%1%] [%2%] [%3%] %4%")
     % fmtThreadID
     % fmtTimeStamp
     % fmtSeverity
-    % boost::log::expressions::smessage;
+    % expressions::smessage;
 
-    auto console_sink = boost::log::add_console_log(std::cout);
+    add_file_log(
+    keywords::target = "logs/", keywords::file_name = "%y%m%d_%3N.log",
+    keywords::rotation_size = 10 * 1024 * 1024,
+    keywords::scan_method = sinks::file::scan_matching,
+    keywords::format = logFmt);
+
+    auto console_sink = ::add_console_log(std::cout);
     console_sink->set_formatter(logFmt);
 }

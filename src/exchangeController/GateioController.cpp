@@ -40,14 +40,11 @@ std::optional<ExchangeController::CurrencyPair> extractPairFromJson(const GateIo
         if(std::size_t next_braket_position = result.find("}", offset); next_braket_position != std::string::npos)
         {
             // here pair has to look like: {"id":"IHT_ETH","base":"IHT"," ... }
-            const std::string pair = result.substr(offset, next_braket_position-offset);
-            //LOG_DEBUG << "pair " << pair;
-            std::string id = getFieldFromPattern(pair, idPattern);
-            std::string base = getFieldFromPattern(pair, basePattern);
-            std::string quote = getFieldFromPattern(pair, quotePattern);
-            //LOG_DEBUG << "id: " << id << " ,base: " << base << " ,quote: " << quote;
+            const std::string pair(result.substr(offset, next_braket_position-offset));
             offset +=idPattern.length();
-            return std::optional<ExchangeController::CurrencyPair>({id, base, quote});
+            return std::optional<ExchangeController::CurrencyPair>({getFieldFromPattern(pair, idPattern)
+                , getFieldFromPattern(pair, basePattern)
+                , getFieldFromPattern(pair, quotePattern)});
         }
     }
     return std::nullopt;
@@ -86,6 +83,28 @@ bool sanityCheck(const GateIoCPP::CurrencyPairsResult& result)
         && result.find("\"quote\"", 0) != std::string::npos
         && result.find("\"fee\"", 0) != std::string::npos;
 }
+
+ExchangeController::OrderStatus fillOrderStatus(const Json::Value& result)
+{
+    // error Json contain message field
+    if(const auto message = result.get("message", Json::Value()); !message.empty())
+    {
+        //"message" : "Your order size 10 is too small. The minimum is 1 USDT"
+        if(message.toStyledString().find("too small", 0) != std::string::npos)
+            return ExchangeController::OrderStatus::SizeTooSmall;
+        //"message" : "Not enough balance"
+        if(message.toStyledString().find("Not enough balance", 0) != std::string::npos)
+            return ExchangeController::OrderStatus::NotEnoughBalance;
+    }
+    if(const auto message = result.get("status", Json::Value()); !message.empty())
+    {
+        if(message.toStyledString().find("cancelled", 0) != std::string::npos)
+            return ExchangeController::OrderStatus::Cancelled;
+        if(message.toStyledString().find("closed", 0) != std::string::npos)
+            return ExchangeController::OrderStatus::Closed;
+    }
+    return ExchangeController::OrderStatus::Unknown;
+}
 }
 
 namespace ExchangeController{
@@ -107,7 +126,8 @@ GateioController::~GateioController()
 {
 }
 
-std::optional<CurrencyPair> GateioController::findNewPairFrom(const GateIoCPP::CurrencyPairsResult& result) const
+// We want to find the first pair quoted in USDT. New pairs are generally quoted in USDT and ETH
+std::optional<CurrencyPair> GateioController::findNewPairFrom(const GateIoCPP::CurrencyPairsResult& result, const std::string& quote) const
 {
     CHRONO_THIS_SCOPE;
 
@@ -115,23 +135,33 @@ std::optional<CurrencyPair> GateioController::findNewPairFrom(const GateIoCPP::C
     while(offset < std::string::npos)
     {
         if(auto currencyPair = extractPairFromJson(result, offset); !allCurrencyPairsCache.contains(currencyPair->id))
-            return currencyPair;
+            if(currencyPair->id.find(quote) != std::string::npos)
+                return currencyPair;
+            else
+                LOG_INFO << "New pair[" << currencyPair->id <<"] found but not quoted on " << quote;
     }
     return std::nullopt;
 }
 
-CurrencyPair GateioController::getNewCurrencyPairSync() 
+CurrencyPair GateioController::getNewCurrencyPairSync(const std::string& quote)  const
 {
+    //int i = 0;
     while(true)
     {
         CHRONO_THIS_SCOPE;
         GateIoCPP::CurrencyPairsResult result;
         gateIoAPI.get_currency_pairs(result);
 
+        /*++i;
+        if(i == 4)
+        {
+            result += ",{\"id\":\"POUETTE_USDT\",\"base\":\"STRONG\",\"quote\":\"USDT\",\"fee\":\"0.2\",\"min_quote_amount\":\"1\",\"amount_precision\":3,\"precision\":2,\"trade_status\":\"tradable\",\"sell_start\":0,\"buy_start\":0}";
+        }*/
+
         if(!sanityCheck(result))
             throw ExchangeControllerException("Sanity check failed in GateioController::getNewCurrencyPairSync()");
 
-        if(result.size() < rawCurrencyPairsResultSize)
+        /*if(result.size() < rawCurrencyPairsResultSize)
         {
             LOG_WARNING << "allCurrencyPairsCache looks like not up to date, result.size() < rawCurrencyPairsResultSize "
             << result.size() 
@@ -140,18 +170,10 @@ CurrencyPair GateioController::getNewCurrencyPairSync()
             << " reset allCurrencyPairsCache with result";
             allCurrencyPairsCache = extractPairsfromJson<decltype(allCurrencyPairsCache)>(result);
             rawCurrencyPairsResultSize = result.size();
-        }
-        else if(result.size() > rawCurrencyPairsResultSize)
-        {
-            if(const auto& newPair = findNewPairFrom(result))
+        }*/
+        if(result.size() > rawCurrencyPairsResultSize)
+            if(const auto& newPair = findNewPairFrom(result, quote))
                 return *newPair;
-            else
-            {
-                LOG_ERROR << "Could not find new pair while result and allCurrencyParisCache sizes are different: "<< result.size() << " vs " << rawCurrencyPairsResultSize 
-                    << std::endl << "result: " << result;
-                throw ExchangeController::ExchangeControllerException("findNewPairFrom failed in GateioController. Check logs from details");
-            }
-        }
     }
 }
 
@@ -161,21 +183,28 @@ TickerResult GateioController::getSpotTicker(const std::string& currencyPair) co
     GateIoCPP::SpotTickersResult result;
     gateIoAPI.get_spot_tickers(currencyPair, result);
 
-    return {result[0]["last"].asString()
-        , result[0]["high_24h"].asString()
-        , result[0]["low_24h"].asString()
-        , result[0]["base_volume"].asString()
-        , result[0]["quote_volume"].asString()
-        , result[0]["lowest_ask"].asString()
-        , result[0]["highest_bid"].asString()};
+    return {boost::lexical_cast<double>(result[0]["last"].asString())
+        , boost::lexical_cast<double>(result[0]["high_24h"].asString())
+        , boost::lexical_cast<double>(result[0]["low_24h"].asString())
+        , boost::lexical_cast<double>(result[0]["base_volume"].asString())
+        , boost::lexical_cast<double>(result[0]["quote_volume"].asString())
+        , boost::lexical_cast<double>(result[0]["lowest_ask"].asString())
+        , boost::lexical_cast<double>(result[0]["highest_bid"].asString())};
 }
 
-OrderResult GateioController::sendOrder(const std::string& currencyPair, const Side side, size_t quantity, const std::string& price) const
+OrderResult GateioController::sendOrder(const std::string& currencyPair, const Side side, double quantity, double price) const
 {
     Json::Value result;
     gateIoAPI.send_limit_order(currencyPair, convertFrom(side), GateIoCPP::TimeInForce::ioc, quantity, price, result);
     LOG_DEBUG << result;
-    return OrderResult();
+    if(const auto& status = fillOrderStatus(result); status == OrderStatus::Closed || status == OrderStatus::Cancelled)
+        return {status
+        ,boost::lexical_cast<double>(result["fill_price"].asString())
+        ,boost::lexical_cast<double>(result["filled_total"].asString())
+        ,boost::lexical_cast<double>(result["amount"].asString())
+        ,boost::lexical_cast<double>(result["fee"].asString()) };
+    else
+        return {status, 0, 0, 0, 0};
 }
 
 } /* end ExchangeController namespace */ 

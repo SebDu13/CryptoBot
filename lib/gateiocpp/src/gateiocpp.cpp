@@ -50,7 +50,7 @@ void GateIoCPP::cleanup()
 	curl_global_cleanup();
 }
 
-void GateIoCPP::get_currency_pairs(CurrencyPairsResult &result)
+void GateIoCPP::get_currency_pairs(CurrencyPairsResult &result) const
 {
 	LOG_DEBUG;
 	CHRONO_THIS_SCOPE;
@@ -95,8 +95,8 @@ void GateIoCPP::send_limit_order (
 	const std::string& currency_pair, 
 	const Side side,
 	const TimeInForce timeInForce,
-	size_t quantity,
-	const std::string& price,
+	long quantity,
+	long price,
 	Json::Value &json_result ) const
 {
 	LOG_DEBUG;
