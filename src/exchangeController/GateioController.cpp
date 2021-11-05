@@ -17,7 +17,7 @@ GateIoCPP::Side convertFrom(ExchangeController::Side side)
     case ExchangeController::Side::buy: return GateIoCPP::Side::buy;
     case ExchangeController::Side::sell: return GateIoCPP::Side::sell;
     default:
-        throw("define " + std::string(magic_enum::enum_name(side)) + "here: GateIoCPP::Side convertFrom(ExchangeController::Side side)");
+        throw("Define " + std::string(magic_enum::enum_name(side)) + "here: GateIoCPP::Side convertFrom(ExchangeController::Side side)");
     }
 }
 
@@ -89,12 +89,18 @@ ExchangeController::OrderStatus fillOrderStatus(const Json::Value& result)
     // error Json contain message field
     if(const auto message = result.get("message", Json::Value()); !message.empty())
     {
+        //"message" : "Invalid currency CURRENCY_NAME"
+        if(message.toStyledString().find("Invalid currency", 0) != std::string::npos)
+            return ExchangeController::OrderStatus::InvalidCurrency;
         //"message" : "Your order size 10 is too small. The minimum is 1 USDT"
         if(message.toStyledString().find("too small", 0) != std::string::npos)
             return ExchangeController::OrderStatus::SizeTooSmall;
         //"message" : "Not enough balance"
         if(message.toStyledString().find("Not enough balance", 0) != std::string::npos)
             return ExchangeController::OrderStatus::NotEnoughBalance;
+        //"message" : "Your order size 1 is too large. The maximum is 1000000 USDT"
+        if(message.toStyledString().find("is too large. The maximum is", 0) != std::string::npos)
+            return ExchangeController::OrderStatus::OrderSizeTooLarge;
     }
     if(const auto message = result.get("status", Json::Value()); !message.empty())
     {
@@ -196,8 +202,10 @@ OrderResult GateioController::sendOrder(const std::string& currencyPair, const S
 {
     Json::Value result;
     gateIoAPI.send_limit_order(currencyPair, convertFrom(side), GateIoCPP::TimeInForce::ioc, quantity, price, result);
-    LOG_DEBUG << result;
-    if(const auto& status = fillOrderStatus(result); status == OrderStatus::Closed || status == OrderStatus::Cancelled)
+    const auto& status = fillOrderStatus(result);
+    if(status != OrderStatus::InvalidCurrency)
+        LOG_DEBUG << result;
+    if( status == OrderStatus::Closed || status == OrderStatus::Cancelled)
         return {status
         ,boost::lexical_cast<double>(result["fill_price"].asString())
         ,boost::lexical_cast<double>(result["filled_total"].asString())
@@ -207,4 +215,4 @@ OrderResult GateioController::sendOrder(const std::string& currencyPair, const S
         return {status, 0, 0, 0, 0};
 }
 
-} /* end ExchangeController namespace */ 
+} /* end of namespace ExchangeController*/

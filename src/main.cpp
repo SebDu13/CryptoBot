@@ -51,14 +51,13 @@ int main()
     //LOG_DEBUG << "base " << newpair.base;
     //LOG_DEBUG << "quote " << newpair.quote;
 	//auto spotTicker = gateioController.getSpotTicker("ETH_USDT");
-	auto resultSendOrder = gateioController.sendOrder("XRP_USDT", ExchangeController::Side::sell, 1, 1);
+	auto resultSendOrder = gateioController.sendOrder(/*"XRP_USDT"*/ "POUETTE_USDT", ExchangeController::Side::buy, 1, 3);
 	LOG_DEBUG << "resultSendOrder.status " << magic_enum::enum_name(resultSendOrder.status);
 	LOG_DEBUG << "resultSendOrder.fillPrice " << resultSendOrder.fillPrice;
 	LOG_DEBUG << "resultSendOrder.filledTotal " << resultSendOrder.filledTotal;
 	LOG_DEBUG << "resultSendOrder.amount " << resultSendOrder.amount;
 	LOG_DEBUG << "resultSendOrder.fee " << resultSendOrder.fee;
 
-	
 	//BinaCPP::get_exchangeInfo(result);
 	//BinaCPP::send_order("","","","sebseb",1,2,"",3,3,3,result);
 	//BinaCPP::get_exchangeInfo(result);

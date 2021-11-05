@@ -22,12 +22,14 @@ namespace ExchangeController
         Closed,
         SizeTooSmall,
         NotEnoughBalance,
+        OrderSizeTooLarge,
+        InvalidCurrency,
         Unknown
     };
 
     struct OrderResult
     {
-        OrderStatus status;
+        OrderStatus status = OrderStatus::Unknown;
         double fillPrice;
         double filledTotal;
         double amount;
@@ -43,6 +45,17 @@ namespace ExchangeController
         double quoteVolume;
         double lowestAsk;
         double highestBid;
+
+        inline std::string toString()
+        {
+            return std::string("last:" + std::to_string(last)
+            + " high24h:" + std::to_string(high24h)
+            + " low24h:" + std::to_string(low24h)
+            + " baseVolume:" + std::to_string(baseVolume)
+            + " quoteVolume:" + std::to_string(quoteVolume)
+            + " lowestAsk:" + std::to_string(lowestAsk)
+            + " highestBid:" + std::to_string(highestBid));
+        }
     };
 
     struct CurrencyPair
@@ -60,8 +73,6 @@ namespace ExchangeController
 
         inline std::string toString()
         {
-            /*std::stringstream stream;
-            stream << "id:" << id << " base:" << base << " quote:" << quote;*/
             return std::string("id:" + id + " base:" + base + " quote:" + quote);
         }
     };
