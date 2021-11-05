@@ -95,12 +95,12 @@ void GateIoCPP::send_limit_order (
 	const std::string& currency_pair, 
 	const Side side,
 	const TimeInForce timeInForce,
-	long quantity,
-	long price,
+	double quantity,
+	double price,
 	Json::Value &json_result ) const
 {
-	LOG_DEBUG;
-	CHRONO_THIS_SCOPE;
+	//LOG_DEBUG;
+	//CHRONO_THIS_SCOPE;
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 )
 	{
@@ -126,7 +126,7 @@ void GateIoCPP::send_limit_order (
 
 	std::string body = bodyJson.toStyledString();
 
-	LOG_DEBUG << "url = " << url << " body = " << body;
+	//LOG_DEBUG << "url = " << url << " body = " << body;
 	
 	std::string action("POST");
 	const auto httpHeader = generateSignedHttpHeader(action, prefix, body);

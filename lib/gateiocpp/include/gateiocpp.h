@@ -38,8 +38,8 @@ class GateIoCPP {
 			const std::string& currency_pair,
 			const Side side,
 			const TimeInForce timeInForce,
-			long quantity,
-			long price,
+			double quantity,
+			double price,
 			Json::Value &json_result ) const;
 		 void get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result) const;
 

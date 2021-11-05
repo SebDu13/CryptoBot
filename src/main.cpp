@@ -5,12 +5,14 @@
 #include <json/json.h>
 #include <unistd.h>
 #include <chrono>
+#include <thread>
 
 #include "logger.hpp"
 #include "binacpp.h"
 #include "gateiocpp.h"
 #include "exchangeController/GateioController.hpp"
 #include "magic_enum.hpp"
+#include "NewListedCurrencyBot.hpp"
 
 namespace {
  void setGateIoApiKey(std::string& apiKey, std::string& secretKey)
@@ -51,12 +53,19 @@ int main()
     //LOG_DEBUG << "base " << newpair.base;
     //LOG_DEBUG << "quote " << newpair.quote;
 	//auto spotTicker = gateioController.getSpotTicker("ETH_USDT");
-	auto resultSendOrder = gateioController.sendOrder(/*"XRP_USDT"*/ "POUETTE_USDT", ExchangeController::Side::buy, 1, 3);
-	LOG_DEBUG << "resultSendOrder.status " << magic_enum::enum_name(resultSendOrder.status);
-	LOG_DEBUG << "resultSendOrder.fillPrice " << resultSendOrder.fillPrice;
-	LOG_DEBUG << "resultSendOrder.filledTotal " << resultSendOrder.filledTotal;
-	LOG_DEBUG << "resultSendOrder.amount " << resultSendOrder.amount;
-	LOG_DEBUG << "resultSendOrder.fee " << resultSendOrder.fee;
+	double quantity = 5;
+	auto resultBuyOrder = gateioController.sendOrder("XRP_USDT", ExchangeController::Side::buy, quantity, 10);
+	LOG_DEBUG << "resultBuyOrder " << resultBuyOrder.toString();
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+
+ 	auto resultSellOrder = gateioController.sendOrder("XRP_USDT", ExchangeController::Side::sell
+	 , resultBuyOrder.amount - resultBuyOrder.fee
+	 , (resultBuyOrder.fillPrice / resultBuyOrder.amount)*0.2);
+	LOG_DEBUG << "resultSellOrder " << resultSellOrder.toString();
+
+	//Bot::NewListedCurrencyBot newListedCurrencyBot(gateioController, "IMX_USDT", 8, 10); // mettre un gros prix 
+	//newListedCurrencyBot.run();
 
 	//BinaCPP::get_exchangeInfo(result);
 	//BinaCPP::send_order("","","","sebseb",1,2,"",3,3,3,result);

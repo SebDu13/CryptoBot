@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <stdexcept>
+#include "magic_enum.hpp"
 
 namespace ExchangeController
 {
@@ -34,6 +35,15 @@ namespace ExchangeController
         double filledTotal;
         double amount;
         double fee;
+
+        inline std::string toString() const
+        {
+            return std::string("status=" + std::string(magic_enum::enum_name(status))
+            + " fillPrice=" + std::to_string(fillPrice)
+            + " filledTotal=" + std::to_string(filledTotal)
+            + " amount=" + std::to_string(amount)
+            + " fee=" + std::to_string(fee));
+        }
     };
 
     struct TickerResult
@@ -46,15 +56,15 @@ namespace ExchangeController
         double lowestAsk;
         double highestBid;
 
-        inline std::string toString()
+        inline std::string toString() const
         {
-            return std::string("last:" + std::to_string(last)
-            + " high24h:" + std::to_string(high24h)
-            + " low24h:" + std::to_string(low24h)
-            + " baseVolume:" + std::to_string(baseVolume)
-            + " quoteVolume:" + std::to_string(quoteVolume)
-            + " lowestAsk:" + std::to_string(lowestAsk)
-            + " highestBid:" + std::to_string(highestBid));
+            return std::string("last=" + std::to_string(last)
+            + " high24h=" + std::to_string(high24h)
+            + " low24h=" + std::to_string(low24h)
+            + " baseVolume=" + std::to_string(baseVolume)
+            + " quoteVolume=" + std::to_string(quoteVolume)
+            + " lowestAsk=" + std::to_string(lowestAsk)
+            + " highestBid=" + std::to_string(highestBid));
         }
     };
 
@@ -71,9 +81,9 @@ namespace ExchangeController
         //sell_start
         //buy_start
 
-        inline std::string toString()
+        inline std::string toString() const
         {
-            return std::string("id:" + id + " base:" + base + " quote:" + quote);
+            return std::string("id=" + id + " base=" + base + " quote=" + quote);
         }
     };
 

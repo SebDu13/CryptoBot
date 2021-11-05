@@ -89,6 +89,10 @@ ExchangeController::OrderStatus fillOrderStatus(const Json::Value& result)
     // error Json contain message field
     if(const auto message = result.get("message", Json::Value()); !message.empty())
     {
+        //"label" : "INVALID_CURRENCY",
+        //"message" : "PIZA_USDT trade is disabled until 2021-11-05T18:00+08:00[Asia/Shanghai]"
+        if(message.toStyledString().find("trade is disabled until", 0) != std::string::npos)
+            return ExchangeController::OrderStatus::InvalidCurrency;
         //"message" : "Invalid currency CURRENCY_NAME"
         if(message.toStyledString().find("Invalid currency", 0) != std::string::npos)
             return ExchangeController::OrderStatus::InvalidCurrency;
@@ -203,8 +207,8 @@ OrderResult GateioController::sendOrder(const std::string& currencyPair, const S
     Json::Value result;
     gateIoAPI.send_limit_order(currencyPair, convertFrom(side), GateIoCPP::TimeInForce::ioc, quantity, price, result);
     const auto& status = fillOrderStatus(result);
-    if(status != OrderStatus::InvalidCurrency)
-        LOG_DEBUG << result;
+    //if(status != OrderStatus::InvalidCurrency)
+    LOG_DEBUG << result;
     if( status == OrderStatus::Closed || status == OrderStatus::Cancelled)
         return {status
         ,boost::lexical_cast<double>(result["fill_price"].asString())
