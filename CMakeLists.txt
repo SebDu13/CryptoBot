@@ -7,7 +7,9 @@ set(CMAKE_BUILD_TYPE release)
 message("Compiler Version: ${CMAKE_CXX_COMPILER}")
 
 find_package(OpenSSL REQUIRED)
-find_package(Boost REQUIRED COMPONENTS log log_setup)
+
+#set(Boost_USE_STATIC_LIBS   ON)
+find_package(Boost 1.71.0 COMPONENTS log program_options REQUIRED)
 
 add_definitions(-std=c++2a -DBOOST_LOG_DYN_LINK)
 

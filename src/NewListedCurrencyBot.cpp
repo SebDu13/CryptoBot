@@ -8,8 +8,8 @@ namespace Bot
 
 NewListedCurrencyBot::NewListedCurrencyBot(const ExchangeController::AbstractExchangeController& exchangeController
         , std::string pairId
-        , double limitBuyPrice
-        , double quantity
+        , Price limitBuyPrice
+        , Quantity quantity
         , double lossThresholdPercent)
 : _exchangeController(exchangeController)
 , _pairId(pairId)
@@ -21,8 +21,8 @@ NewListedCurrencyBot::NewListedCurrencyBot(const ExchangeController::AbstractExc
 
 NewListedCurrencyBot::NewListedCurrencyBot(const ExchangeController::AbstractExchangeController& exchangeController
         , std::string pairId
-        , double limitBuyPrice
-        , double quantity)
+        , Price limitBuyPrice
+        , Quantity quantity)
 : _exchangeController(exchangeController)
 , _pairId(pairId)
 , _limitBuyPrice(limitBuyPrice)
