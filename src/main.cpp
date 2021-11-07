@@ -25,7 +25,8 @@ int main(int argc, char **argv)
 	if(botConfig.loadOptionsFromMain(argc, argv) == Status::Failure)
 		return -1;
 
-	Logger::init(Logger::FilterLevel::Debug);
+	Logger::init(Logger::FilterLevel::Debug, botConfig.getPairId(), botConfig.getWithConsole());
+	LOG_INFO << botConfig.toString();
 
 	std::string resultCurrencyPairs;
 	Json::Value resultLimitOrder;
@@ -56,11 +57,12 @@ int main(int argc, char **argv)
 	 , (resultBuyOrder.fillPrice / resultBuyOrder.amount)*0.2);
 	LOG_DEBUG << "resultSellOrder " << resultSellOrder.toString();*/
 
-	/*Bot::NewListedCurrencyBot newListedCurrencyBot(gateioController
+	Bot::NewListedCurrencyBot newListedCurrencyBot(gateioController
 		, botConfig.getPairId()
 		, botConfig.getLimitBuyPrice()
 		, botConfig.getQuantity());
-	newListedCurrencyBot.run();*/
+
+	newListedCurrencyBot.run();
 
 	//BinaCPP::get_exchangeInfo(result);
 	//BinaCPP::send_order("","","","sebseb",1,2,"",3,3,3,result);

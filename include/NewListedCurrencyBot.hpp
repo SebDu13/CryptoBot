@@ -38,7 +38,7 @@ class NewListedCurrencyBot
     const std::string _pairId;
     Price _limitBuyPrice;
     double _quantity;
-    const double _lossThresholdPercent = 0.95;
+    const double _lossThresholdPercent = 0.90;
 
     void shouldSellSync(const ExchangeController::OrderResult& buyOrderResult) const;
     void sellAll(const ExchangeController::OrderResult& buyOrderResult);

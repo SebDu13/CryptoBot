@@ -22,5 +22,5 @@ struct Logger
 	};
 
 	inline static boost::log::sources::severity_logger<boost::log::trivial::severity_level> log;
-	static void init(FilterLevel filterLevel);	
+	static void init(FilterLevel filterLevel, const std::string& pairId, bool withConsole);
 };

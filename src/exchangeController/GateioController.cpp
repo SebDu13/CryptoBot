@@ -207,8 +207,9 @@ OrderResult GateioController::sendOrder(const std::string& currencyPair, const S
     Json::Value result;
     gateIoAPI.send_limit_order(currencyPair, convertFrom(side), GateIoCPP::TimeInForce::ioc, quantity, price, result);
     const auto& status = fillOrderStatus(result);
-    //if(status != OrderStatus::InvalidCurrency)
-    LOG_DEBUG << result;
+    if(status != OrderStatus::InvalidCurrency)
+        LOG_DEBUG << result;
+        
     if( status == OrderStatus::Closed || status == OrderStatus::Cancelled)
         return {status
         ,boost::lexical_cast<double>(result["fill_price"].asString())
