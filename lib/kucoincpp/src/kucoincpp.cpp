@@ -8,13 +8,13 @@
 #include <vector>
 #include <exception>
 
-#include "gateiocpp.h"
+#include "kucoincpp.hpp"
 #include "logger.hpp"
 #include "magic_enum.hpp"
 #include "sha.hpp"
 #include "chrono.hpp"
 
-#define GATEIO_HOST "https://api.gateio.ws"
+#define KUCOIN_HOST "https://api.kucoin.com"
 
 namespace{
 
@@ -26,52 +26,80 @@ size_t curl_cb( void *content, size_t size, size_t nmemb, std::string *buffer )
 
 }
 
-
-GateIoCPP::GateIoCPP( std::string &api_key, std::string &secret_key ) 
+KucoinCPP::KucoinCPP( std::string &api_key, std::string &secret_key ) 
 {
 	LOG_INFO <<  "with api_key " << api_key;
 	curl_global_init(CURL_GLOBAL_DEFAULT);
-	GateIoCPP::curl = curl_easy_init();
-	GateIoCPP::api_key = api_key;
-	GateIoCPP::secret_key = secret_key;
+	KucoinCPP::curl = curl_easy_init();
+	KucoinCPP::api_key = api_key;
+	KucoinCPP::secret_key = secret_key;
 }
 
-GateIoCPP::~GateIoCPP()
+KucoinCPP::~KucoinCPP()
 {
 	LOG_INFO;
 	cleanup();
 }
 
-
-void GateIoCPP::cleanup()
+void KucoinCPP::cleanup()
 {
 	LOG_INFO;
-	curl_easy_cleanup(GateIoCPP::curl);
+	curl_easy_cleanup(KucoinCPP::curl);
 	curl_global_cleanup();
 }
 
-void GateIoCPP::get_currency_pairs(CurrencyPairsResult &result) const
+//Get Ticker
+//{
+//    "sequence": "1550467636704",
+//    "bestAsk": "0.03715004",
+//    "size": "0.17",
+//    "price": "0.03715005",
+//    "bestBidSize": "3.803",
+//    "bestBid": "0.03710768",
+//    "bestAskSize": "1.788",
+//    "time": 1550653727731
+//}
+void KucoinCPP::getTicker(const std::string pairId, SpotTickersResult &json_result) const
+{
+    getTickersGeneric("/api/v1/market/orderbook/level1?symbol=" + pairId, json_result);
+}
+
+//Get 24hr Stats
+//{
+//    "time": 1602832092060,  // time
+//    "symbol": "BTC-USDT",   // symbol
+//    "buy": "11328.9",   // bestAsk
+//    "sell": "11329",    // bestBid
+//    "changeRate": "-0.0055",    // 24h change rate
+//    "changePrice": "-63.6", // 24h change price
+//    "high": "11610",    // 24h highest price
+//    "low": "11200", // 24h lowest price
+//    "vol": "2282.70993217", // 24h volume，the aggregated trading volume in BTC
+//    "volValue": "25984946.157790431",   // 24h total, the trading volume in quote currency of last 24 hours
+//    "last": "11328.9",  // last price
+//    "averagePrice": "11360.66065903",   // 24h average transaction price yesterday
+//    "takerFeeRate": "0.001",    // Basic Taker Fee
+//    "makerFeeRate": "0.001",    // Basic Maker Fee
+//    "takerCoefficient": "1",    // Taker Fee Coefficient
+//    "makerCoefficient": "1" // Maker Fee Coefficient
+//}
+void KucoinCPP::get24HrStats(const std::string pairId, SpotTickersResult &json_result) const
+{
+    getTickersGeneric("GET /api/v1/market/stats?symbol=" + pairId, json_result);
+}
+
+void KucoinCPP::getTickersGeneric(const std::string url, SpotTickersResult &json_result) const
 {
 	LOG_DEBUG;
 	CHRONO_THIS_SCOPE;
 
-	std::string url(GATEIO_HOST);  
-	url += "/api/v4/spot/currency_pairs";
+	std::string _url(KUCOIN_HOST);  
+	_url += url;
 
-	curl_api(url,result) ;
-}
-
-void GateIoCPP::get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result) const
-{
-	//CHRONO_THIS_SCOPE;
-
-	std::string url(GATEIO_HOST);  
-	url += "/api/v4/spot/tickers?currency_pair=" + currencyPair;
-
-	//LOG_DEBUG << "url " << url;
+	LOG_DEBUG << "url " << _url;
 
 	std::string str_result;
-	curl_api( url, str_result );
+	curl_api( _url, str_result );
 
 	if ( !str_result.empty() ) 
 	{	
@@ -81,7 +109,7 @@ void GateIoCPP::get_spot_tickers(const std::string& currencyPair, SpotTickersRes
 			json_result.clear();	
 			reader.parse( str_result , json_result );
 		} 
-		catch ( std::exception &e ) 
+		catch ( std::exception &e )
 		{
 		 	LOG_ERROR <<  "Error ! " << e.what(); 
 		}   
@@ -90,7 +118,7 @@ void GateIoCPP::get_spot_tickers(const std::string& currencyPair, SpotTickersRes
 		LOG_ERROR <<  "Failed to get anything.";
 }
 
-void GateIoCPP::send_limit_order ( 
+void KucoinCPP::send_limit_order ( 
 	const std::string& currency_pair, 
 	const Side side,
 	const TimeInForce timeInForce,
@@ -107,7 +135,7 @@ void GateIoCPP::send_limit_order (
 		return ;
 	}
 
-	std::string url(GATEIO_HOST);
+	std::string url(KUCOIN_HOST);
 	std::string prefix("/api/v4/spot/orders");
 	url += prefix;
 
@@ -149,12 +177,12 @@ void GateIoCPP::send_limit_order (
 		LOG_ERROR << "Failed to get anything.";
 }
 
-void GateIoCPP::curl_api( std::string &url, std::string &result_json ) const
+void KucoinCPP::curl_api( std::string &url, std::string &result_json ) const
 {
 	curl_api_with_header( url , {}, "" , "GET", result_json );	
 }
 
-std::vector <std::string> GateIoCPP::generateSignedHttpHeader(const std::string& action, const std::string& prefix, const std::string& body) const
+std::vector <std::string> KucoinCPP::generateSignedHttpHeader(const std::string& action, const std::string& prefix, const std::string& body) const
 {
 	std::string bodyHash = tools::sha512(body.c_str());
 	auto timeStamp = tools::get_current_epoch();
@@ -175,13 +203,13 @@ std::vector <std::string> GateIoCPP::generateSignedHttpHeader(const std::string&
 		,"SIGN: " + signHash};
 }
 
-void GateIoCPP::curl_api_with_header(const std::string &url
+void KucoinCPP::curl_api_with_header(const std::string &url
 			,const std::vector <std::string> &extra_http_header
 			,const std::string &post_data
 			,const std::string &action
 			, std::string &str_result) const
 {
-	//CHRONO_THIS_SCOPE;
+	CHRONO_THIS_SCOPE;
 	CURLcode res;
 
 	if( curl ) {
@@ -199,16 +227,16 @@ void GateIoCPP::curl_api_with_header(const std::string &url
 			for ( int i = 0 ; i < extra_http_header.size() ;i++ ) {
 				chunk = curl_slist_append(chunk, extra_http_header[i].c_str() );
 			}
-			curl_easy_setopt(GateIoCPP::curl, CURLOPT_HTTPHEADER, chunk);
+			curl_easy_setopt(KucoinCPP::curl, CURLOPT_HTTPHEADER, chunk);
 		}
 
 		if ( action == "PUT" || action == "DELETE" ) 
-			curl_easy_setopt(GateIoCPP::curl, CURLOPT_CUSTOMREQUEST, action.c_str() );
+			curl_easy_setopt(KucoinCPP::curl, CURLOPT_CUSTOMREQUEST, action.c_str() );
 
 		if(!post_data.empty() || action == "POST")
-			curl_easy_setopt(GateIoCPP::curl, CURLOPT_POSTFIELDS, post_data.c_str() );
+			curl_easy_setopt(KucoinCPP::curl, CURLOPT_POSTFIELDS, post_data.c_str() );
 
-		res = curl_easy_perform(GateIoCPP::curl);
+		res = curl_easy_perform(KucoinCPP::curl);
 		curl_easy_reset(curl); // reset the options
 
 		/* Check for errors */ 

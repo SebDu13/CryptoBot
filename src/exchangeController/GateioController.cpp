@@ -17,7 +17,7 @@ GateIoCPP::Side convertFrom(ExchangeController::Side side)
     case ExchangeController::Side::buy: return GateIoCPP::Side::buy;
     case ExchangeController::Side::sell: return GateIoCPP::Side::sell;
     default:
-        throw("Define " + std::string(magic_enum::enum_name(side)) + "here: GateIoCPP::Side convertFrom(ExchangeController::Side side)");
+        throw ExchangeController::ExchangeControllerException("Define " + std::string(magic_enum::enum_name(side)) + "here: GateIoCPP::Side convertFrom(ExchangeController::Side side)");
     }
 }
 
@@ -189,7 +189,7 @@ CurrencyPair GateioController::getNewCurrencyPairSync(const std::string& quote) 
 
 TickerResult GateioController::getSpotTicker(const std::string& currencyPair) const
 {
-    CHRONO_THIS_SCOPE;
+    //CHRONO_THIS_SCOPE;
     GateIoCPP::SpotTickersResult result;
     gateIoAPI.get_spot_tickers(currencyPair, result);
 
@@ -207,8 +207,8 @@ OrderResult GateioController::sendOrder(const std::string& currencyPair, const S
     Json::Value result;
     gateIoAPI.send_limit_order(currencyPair, convertFrom(side), GateIoCPP::TimeInForce::ioc, quantity, price, result);
     const auto& status = fillOrderStatus(result);
-    if(status != OrderStatus::InvalidCurrency)
-        LOG_DEBUG << result;
+    
+    LOG_DEBUG << result;
         
     if( status == OrderStatus::Closed || status == OrderStatus::Cancelled)
         return {status

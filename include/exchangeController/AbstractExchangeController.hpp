@@ -44,6 +44,11 @@ namespace ExchangeController
             + " amount=" + std::to_string(amount)
             + " fee=" + std::to_string(fee));
         }
+
+        bool operator==(OrderResult& other)
+        {
+            return status == other.status && fillPrice == other.fillPrice && filledTotal == other.filledTotal && amount == other.amount && fee == other.fee;
+        }
     };
 
     struct TickerResult
@@ -65,6 +70,22 @@ namespace ExchangeController
             + " quoteVolume=" + std::to_string(quoteVolume)
             + " lowestAsk=" + std::to_string(lowestAsk)
             + " highestBid=" + std::to_string(highestBid));
+        }
+
+        bool operator==(const TickerResult& other) const
+        {
+            return last == other.last 
+                && high24h == other.high24h 
+                && low24h == other.low24h 
+                && baseVolume == other.baseVolume 
+                && quoteVolume == other.quoteVolume
+                && lowestAsk == other.lowestAsk
+                && highestBid == other.highestBid;
+        }
+
+        bool operator!=(const TickerResult& other) const
+        {
+            return !(*this==other);
         }
     };
 

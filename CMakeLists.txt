@@ -17,6 +17,8 @@ set(BINANCE_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/binacpp/)
 set(BINANCE_INCLUDE_DIR ${BINANCE_LIB_DIR}/include)
 set(GATEIO_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/gateiocpp/)
 set(GATEIO_INCLUDE_DIR ${GATEIO_LIB_DIR}/include)
+set(KUCOIN_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/kucoincpp/)
+set(KUCOIN_INCLUDE_DIR ${KUCOIN_LIB_DIR}/include)
 set(JSONCPP_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/jsoncpp-1.8.3/)
 set(JSONCPP_INCLUDE_DIR ${JSONCPP_LIB_DIR}/include)
 set(TOOLS_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/tools/)
@@ -54,12 +56,21 @@ add_library(
 	${GATEIO_SOURCES}
 )
 
+file(GLOB KUCOIN_SOURCES CONFIGURE_DEPENDS ${KUCOIN_LIB_DIR}/src/*.cpp)
+file(GLOB KUCOIN_HEADERS CONFIGURE_DEPENDS ${KUCOIN_LIB_DIR}/include/*.h)
+add_library(
+	kucoin
+	${KUCOIN_HEADERS}
+	${KUCOIN_SOURCES}
+)
+
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${TOOLS_INCLUDE_DIR}
   ${JSONCPP_INCLUDE_DIR}
   ${BINANCE_INCLUDE_DIR}
   ${GATEIO_INCLUDE_DIR}
+  ${KUCOIN_INCLUDE_DIR}
   ${Boost_INCLUDE_DIR}
 )
 
@@ -75,6 +86,7 @@ target_link_libraries (
 	jsoncpp
 	binance
 	gateio
+	kucoin
 	tools
 	curl
 	OpenSSL::Crypto

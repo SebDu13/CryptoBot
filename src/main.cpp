@@ -15,6 +15,7 @@
 #include "NewListedCurrencyBot.hpp"
 #include "BotType.hpp"
 #include "BotConfig.hpp"
+#include "ThresholdService.hpp"
 
 
 int main(int argc, char **argv) 
@@ -28,46 +29,21 @@ int main(int argc, char **argv)
 	Logger::init(Logger::FilterLevel::Debug, botConfig.getPairId(), botConfig.getWithConsole());
 	LOG_INFO << botConfig.toString();
 
-	std::string resultCurrencyPairs;
-	Json::Value resultLimitOrder;
-	Json::Value result;
-	//BinaCPP::init( apiKey , secretKey );
-	//GateIoCPP gateIoAPI( apiKey , secretKey );
-	//gateIoAPI.get_currency_pairs(resultCurrencyPairs);
+	auto apiKeys = botConfig.getApiKeys();
+	ExchangeController::GateioController gateioController(apiKeys.pub, apiKeys.secret);
 
-	auto apiKey = botConfig.getApiKeys();
-	ExchangeController::GateioController gateioController(apiKey.pub, apiKey.secret);
-	//auto newpair = gateioController.getNewCurrencyPairSync("USDT");
-	//LOG_DEBUG << "id " << newpair.id;
-    //LOG_DEBUG << "base " << newpair.base;
-    //LOG_DEBUG << "quote " << newpair.quote;
-	/*while(true)
-	{
-		auto spotTicker = gateioController.getSpotTicker("ETH_USDT");
-		LOG_DEBUG << spotTicker.toString();
-	}*/
-	/*double quantity = 5;
-	auto resultBuyOrder = gateioController.sendOrder("XRP_USDT", ExchangeController::Side::buy, quantity, 10);
-	LOG_DEBUG << "resultBuyOrder " << resultBuyOrder.toString();
-
-	std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-
- 	auto resultSellOrder = gateioController.sendOrder("XRP_USDT", ExchangeController::Side::sell
-	 , resultBuyOrder.amount - resultBuyOrder.fee
-	 , (resultBuyOrder.fillPrice / resultBuyOrder.amount)*0.2);
-	LOG_DEBUG << "resultSellOrder " << resultSellOrder.toString();*/
+	// à construire via un fichier de config ? 
+	Bot::ThresholdService thresholdService({{1.2, 0.7}, {1.5, 0.75}, {1.8, 0.8}, {2, 0.9}});
 
 	Bot::NewListedCurrencyBot newListedCurrencyBot(gateioController
 		, botConfig.getPairId()
 		, botConfig.getLimitBuyPrice()
-		, botConfig.getQuantity());
+		, botConfig.getQuantity()
+		, thresholdService);
 
-	newListedCurrencyBot.run();
+	//newListedCurrencyBot.run();
+	//newListedCurrencyBot.watch();
 
-	//BinaCPP::get_exchangeInfo(result);
-	//BinaCPP::send_order("","","","sebseb",1,2,"",3,3,3,result);
-	//BinaCPP::get_exchangeInfo(result);
-	//gateIoAPI.get_currency_pairs(result);
 
 	int i=1;
 	/*do
