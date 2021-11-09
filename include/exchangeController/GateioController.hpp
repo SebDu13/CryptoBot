@@ -1,19 +1,21 @@
 #pragma once
 
-#include "gateiocpp.h"
-#include "exchangeController/AbstractExchangeController.hpp"
 #include <string>
 #include <unordered_set>
+#include "gateiocpp.h"
+#include "exchangeController/AbstractExchangeController.hpp"
+#include "BotType.hpp"
 
 namespace ExchangeController{
 
 class GateioController: public AbstractExchangeController
 {
     public:
-        GateioController(std::string &api_key, std::string &secret_key);
+        GateioController(const Bot::ApiKeys& apiKeys);
         virtual ~GateioController();
         CurrencyPair getNewCurrencyPairSync(const std::string& quote) const override;
         TickerResult getSpotTicker(const std::string& currencyPair) const override;
+        std::string getOrderBook(const std::string& currencyPair) const override;
         OrderResult sendOrder(const std::string& currencyPair, const Side side, double quantity, double price) const override;
 
     private:

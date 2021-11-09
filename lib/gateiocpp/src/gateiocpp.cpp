@@ -27,7 +27,7 @@ size_t curl_cb( void *content, size_t size, size_t nmemb, std::string *buffer )
 }
 
 
-GateIoCPP::GateIoCPP( std::string &api_key, std::string &secret_key ) 
+GateIoCPP::GateIoCPP(const std::string &api_key, const std::string &secret_key ) 
 {
 	LOG_INFO <<  "with api_key " << api_key;
 	curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -61,33 +61,51 @@ void GateIoCPP::get_currency_pairs(CurrencyPairsResult &result) const
 	curl_api(url,result) ;
 }
 
-void GateIoCPP::get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result) const
+template<class ResultType>
+void GateIoCPP::getGeneric(const std::string& url, ResultType &json_result) const
 {
 	//CHRONO_THIS_SCOPE;
 
-	std::string url(GATEIO_HOST);  
-	url += "/api/v4/spot/tickers?currency_pair=" + currencyPair;
+	std::string _url(GATEIO_HOST);
+	_url += url;
 
-	//LOG_DEBUG << "url " << url;
+	//LOG_DEBUG << "_url " << _url;
 
 	std::string str_result;
-	curl_api( url, str_result );
+	curl_api( _url, str_result );
 
 	if ( !str_result.empty() ) 
 	{	
-		try 
+		if constexpr(std::is_same<ResultType, Json::Value>::value)
 		{
-			Json::Reader reader;
-			json_result.clear();	
-			reader.parse( str_result , json_result );
-		} 
-		catch ( std::exception &e ) 
+			try 
+			{
+				Json::Reader reader;
+				json_result.clear();	
+				reader.parse( str_result , json_result );
+			} 
+			catch ( std::exception &e ) 
+			{
+				LOG_ERROR <<  "Error ! " << e.what(); 
+			}   
+		}
+		if constexpr(std::is_same<ResultType, std::string>::value)
 		{
-		 	LOG_ERROR <<  "Error ! " << e.what(); 
-		}   
+			json_result = std::move(str_result);
+		}
 	}
 	else
 		LOG_ERROR <<  "Failed to get anything.";
+}
+
+void GateIoCPP::getOrderBook(const std::string& currencyPair, std::string &result) const
+{
+	getGeneric("/api/v4/spot/order_book?currency_pair=" + currencyPair, result);
+}
+
+void GateIoCPP::get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result) const
+{
+	getGeneric("/api/v4/spot/tickers?currency_pair=" + currencyPair, json_result);
 }
 
 void GateIoCPP::send_limit_order ( 

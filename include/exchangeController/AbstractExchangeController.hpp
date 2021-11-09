@@ -114,6 +114,7 @@ class AbstractExchangeController
         virtual ~AbstractExchangeController(){};
         virtual CurrencyPair getNewCurrencyPairSync(const std::string& quote) const  =0;
         virtual TickerResult getSpotTicker(const std::string& currencyPair) const =0;
+        virtual std::string getOrderBook(const std::string& currencyPair) const =0;
         virtual OrderResult sendOrder(const std::string& currency_pair, const Side side, double quantity, double price) const  =0;
 };
 

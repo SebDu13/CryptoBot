@@ -28,11 +28,12 @@ class KucoinCPP {
 			poc
 		};
 
-		 KucoinCPP( std::string &api_key, std::string &secret_key);
+		 KucoinCPP(const std::string &api_key,const std::string &secret_key);
 		 virtual ~KucoinCPP();
 		 void cleanup();
 
 		// Public API
+		// pair id looks like "ETH-USDT"
 		 void send_limit_order ( 
 			const std::string& currency_pair,
 			const Side side,

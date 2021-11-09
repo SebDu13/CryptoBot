@@ -26,7 +26,7 @@ size_t curl_cb( void *content, size_t size, size_t nmemb, std::string *buffer )
 
 }
 
-KucoinCPP::KucoinCPP( std::string &api_key, std::string &secret_key ) 
+KucoinCPP::KucoinCPP(const std::string &api_key, const std::string &secret_key ) 
 {
 	LOG_INFO <<  "with api_key " << api_key;
 	curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -85,7 +85,7 @@ void KucoinCPP::getTicker(const std::string pairId, SpotTickersResult &json_resu
 //}
 void KucoinCPP::get24HrStats(const std::string pairId, SpotTickersResult &json_result) const
 {
-    getTickersGeneric("GET /api/v1/market/stats?symbol=" + pairId, json_result);
+    getTickersGeneric("/api/v1/market/stats?symbol=" + pairId, json_result);
 }
 
 void KucoinCPP::getTickersGeneric(const std::string url, SpotTickersResult &json_result) const
@@ -96,7 +96,7 @@ void KucoinCPP::getTickersGeneric(const std::string url, SpotTickersResult &json
 	std::string _url(KUCOIN_HOST);  
 	_url += url;
 
-	LOG_DEBUG << "url " << _url;
+	LOG_DEBUG << "url" << _url;
 
 	std::string str_result;
 	curl_api( _url, str_result );

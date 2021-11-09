@@ -119,7 +119,7 @@ ExchangeController::OrderStatus fillOrderStatus(const Json::Value& result)
 
 namespace ExchangeController{
 
-GateioController::GateioController(std::string &api_key, std::string &secret_key):gateIoAPI(api_key, secret_key)
+GateioController::GateioController(const Bot::ApiKeys& apiKeys):gateIoAPI(apiKeys.pub, apiKeys.secret)
 {
     GateIoCPP::CurrencyPairsResult result;
     gateIoAPI.get_currency_pairs(result);
@@ -200,6 +200,13 @@ TickerResult GateioController::getSpotTicker(const std::string& currencyPair) co
         , boost::lexical_cast<double>(result[0]["quote_volume"].asString())
         , boost::lexical_cast<double>(result[0]["lowest_ask"].asString())
         , boost::lexical_cast<double>(result[0]["highest_bid"].asString())};
+}
+
+std::string GateioController::getOrderBook(const std::string& currencyPair) const
+{
+    std::string result;
+    gateIoAPI.getOrderBook(currencyPair,result);
+    return result;
 }
 
 OrderResult GateioController::sendOrder(const std::string& currencyPair, const Side side, double quantity, double price) const

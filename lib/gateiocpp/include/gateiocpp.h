@@ -28,7 +28,7 @@ class GateIoCPP {
 			poc
 		};
 
-		 GateIoCPP( std::string &api_key, std::string &secret_key);
+		 GateIoCPP(const std::string &api_key, const std::string &secret_key);
 		 virtual ~GateIoCPP();
 		 void cleanup();
 
@@ -42,6 +42,7 @@ class GateIoCPP {
 			double price,
 			Json::Value &json_result ) const;
 		 void get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result) const;
+		 void getOrderBook(const std::string& currencyPair, std::string &result) const;
 
 		private:
 		std::string api_key = "";
@@ -57,5 +58,8 @@ class GateIoCPP {
 		 std::vector <std::string> generateSignedHttpHeader(const std::string& action
 		, const std::string& prefix
 		, const std::string& body) const;
+
+		template<class ResultType>
+		void getGeneric(const std::string& url, ResultType &result) const;
 
 };

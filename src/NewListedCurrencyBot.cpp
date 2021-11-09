@@ -83,7 +83,7 @@ void NewListedCurrencyBot::shouldSellSync(const ExchangeController::OrderResult&
                     << " current gain=" << gain
                     << " current lossThreshold=" << lossThreshold
                     << " tickerResult " << tickerResult.toString();
-
+            LOG_INFO << "OrderBook: " << _exchangeController.getOrderBook(_pairId);
             previousTickerResult = tickerResult;
         }
 
@@ -103,6 +103,7 @@ void NewListedCurrencyBot::watch() const
         if(previousTickerResult != tickerResult)
         {
             LOG_INFO << "tickerResult " << tickerResult.toString();
+            LOG_INFO << "jsonOrderBook " << _exchangeController.getOrderBook(_pairId);
             previousTickerResult = tickerResult;
         }
     }
