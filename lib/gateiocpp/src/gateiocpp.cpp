@@ -141,8 +141,8 @@ void GateIoCPP::send_limit_order (
 	bodyJson["account"] = "spot";
 	bodyJson["side"] = std::string(magic_enum::enum_name(side));
 	bodyJson["iceberg"] = "0";
-	bodyJson["amount"] = quantity;
-	bodyJson["price"] = price;
+	bodyJson["amount"] = std::to_string(quantity);
+	bodyJson["price"] = std::to_string(price);
 	bodyJson["time_in_force"] = std::string(magic_enum::enum_name(timeInForce));
 	bodyJson["auto_borrow"] = false;
 
@@ -175,7 +175,7 @@ void GateIoCPP::getAccountBalances(Json::Value &result) const
 	const auto httpHeader = generateSignedHttpHeader(action, prefix, body);
 	curl_api_with_header( url, httpHeader, body, action, stringResult );
 
-	LOG_INFO << stringResult;
+	//LOG_INFO << stringResult;
 
 	if ( stringResult.size() > 0 ) 
 	{

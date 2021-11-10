@@ -227,11 +227,6 @@ OrderResult GateioController::sendOrder(const std::string& currencyPair, const S
         return {status, 0, 0, 0, 0};
 }
 
-double GateioController::getMinPrice() const
-{
-    return MIN_ORDER_PRICE;
-}
-
 Bot::Quantity GateioController::computeMaxQuantity(double price) const
 {
     Json::Value result;

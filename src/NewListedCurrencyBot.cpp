@@ -51,7 +51,7 @@ void NewListedCurrencyBot::run()
     {
         LOG_ERROR << "Cannot sell " << _pairId 
             << " because buyOrderResult.status=" << magic_enum::enum_name(sellOrderResult.status) 
-            << "*** POSITION IS OPEN ***";
+            << " *** POSITION IS OPEN ***";
         return;
     }
 
@@ -101,7 +101,7 @@ void NewListedCurrencyBot::shouldSellSync(const ExchangeController::OrderResult&
                     << " current GAIN=" << tickerResult.last/purchasePrice
                     << " current lossThreshold=" << lossThreshold
                     << " tickerResult " << tickerResult.toString();
-            LOG_INFO << "OrderBook: " << _exchangeController.getOrderBook(_pairId);
+            //LOG_INFO << "OrderBook: " << _exchangeController.getOrderBook(_pairId);
             previousTickerResult = tickerResult;
         }
 
@@ -132,16 +132,10 @@ ExchangeController::OrderResult NewListedCurrencyBot::sellAll(const ExchangeCont
     if(buyOrderResult.amount)
     {
         double amountLeft = buyOrderResult.amount - buyOrderResult.fee;
-        double sellPrice = getSmallPrice(buyOrderResult.fillPrice / buyOrderResult.amount); // 20% of the price we bought then we are sure to be executed
+        double sellPrice = (buyOrderResult.fillPrice / buyOrderResult.amount)*0.2; // 20% of the price we bought then we are sure to be executed
         return _exchangeController.sendOrder(_pairId, ExchangeController::Side::sell, amountLeft, sellPrice);
     }
     return ExchangeController::OrderResult();
-}
-
-double NewListedCurrencyBot::getSmallPrice(double price) const
-{
-    const double smallPrice = price *0.2;
-    return smallPrice < _exchangeController.getMinPrice() ? _exchangeController.getMinPrice() : smallPrice;
 }
 
 } /* end namespace Bot */ 

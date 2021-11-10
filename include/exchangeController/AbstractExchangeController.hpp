@@ -117,7 +117,6 @@ class AbstractExchangeController
         virtual TickerResult getSpotTicker(const std::string& currencyPair) const =0;
         virtual std::string getOrderBook(const std::string& currencyPair) const =0;
         virtual OrderResult sendOrder(const std::string& currency_pair, const Side side, double quantity, double price) const  =0;
-        virtual double getMinPrice() const =0;
         virtual Bot::Quantity computeMaxQuantity(double price) const=0;
 };
 
