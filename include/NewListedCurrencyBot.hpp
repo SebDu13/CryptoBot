@@ -36,7 +36,7 @@ class NewListedCurrencyBot
 
     void shouldSellSync(const ExchangeController::OrderResult& buyOrderResult) const;
     ExchangeController::OrderResult sellAll(const ExchangeController::OrderResult& buyOrderResult);
-    ExchangeController::OrderResult buySync();
+    std::optional<ExchangeController::OrderResult> buySync();
 };
 
 } /* end namespace Bot */ 

@@ -6,6 +6,9 @@
 
 namespace tools
 {
+    // should move this one in an other file
+    bool kbhit();
+
     class Chrono
     {
         public:

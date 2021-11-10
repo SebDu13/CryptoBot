@@ -25,17 +25,19 @@ NewListedCurrencyBot::~NewListedCurrencyBot()
 void NewListedCurrencyBot::run()
 {
     // Wait
-    ExchangeController::OrderResult buyOrderResult = buySync();
+    std::optional<ExchangeController::OrderResult> buyOrderResult = buySync();
+    if(!buyOrderResult)
+        return;
 
-    if(buyOrderResult.status != ExchangeController::OrderStatus::Closed)
+    if(buyOrderResult->status != ExchangeController::OrderStatus::Closed)
     {
-        LOG_ERROR << "Cannot buy " << _pairId << " because buyOrderResult.status=" << magic_enum::enum_name(buyOrderResult.status);
+        LOG_ERROR << "Cannot buy " << _pairId << " because buyOrderResult.status=" << magic_enum::enum_name(buyOrderResult->status);
         return;
     }
 
     // Wait
-    shouldSellSync(buyOrderResult);
-    ExchangeController::OrderResult sellOrderResult = sellAll(buyOrderResult);
+    shouldSellSync(*buyOrderResult);
+    ExchangeController::OrderResult sellOrderResult = sellAll(*buyOrderResult);
 
     if(sellOrderResult.status != ExchangeController::OrderStatus::Closed)
     {
@@ -45,12 +47,12 @@ void NewListedCurrencyBot::run()
         return;
     }
 
-    const double pnl = sellOrderResult.fillPrice - sellOrderResult.fee - buyOrderResult.fillPrice - buyOrderResult.fee;
-    LOG_INFO << "Pnl: " << pnl << " USDT. " << (pnl/buyOrderResult.fillPrice)*100 << "%";
+    const double pnl = sellOrderResult.fillPrice - sellOrderResult.fee - buyOrderResult->fillPrice - buyOrderResult->fee;
+    LOG_INFO << "Pnl: " << pnl << " USDT. " << (pnl/buyOrderResult->fillPrice)*100 << "%";
 
 }
 
-ExchangeController::OrderResult NewListedCurrencyBot::buySync()
+std::optional<ExchangeController::OrderResult> NewListedCurrencyBot::buySync()
 {
     ExchangeController::OrderResult buyOrderResult;
     do
@@ -60,6 +62,12 @@ ExchangeController::OrderResult NewListedCurrencyBot::buySync()
 
         if(buyOrderResult.status != ExchangeController::OrderStatus::InvalidCurrency)
             LOG_DEBUG << magic_enum::enum_name(buyOrderResult.status);
+
+        if(tools::kbhit())
+        {
+            LOG_INFO << "key pressed, stopping...";
+            return std::nullopt;
+        }
 
     } while (buyOrderResult.status == ExchangeController::OrderStatus::InvalidCurrency);
 
@@ -71,7 +79,8 @@ void NewListedCurrencyBot::shouldSellSync(const ExchangeController::OrderResult&
 {
     ExchangeController::TickerResult previousTickerResult;
     const double purchasePrice = buyOrderResult.fillPrice / buyOrderResult.amount;
-    while(true)
+
+    while(!tools::kbhit())
     {
         const ExchangeController::TickerResult tickerResult = _exchangeController.getSpotTicker(_pairId);
         const double gain = tickerResult.high24h/purchasePrice;
@@ -80,7 +89,7 @@ void NewListedCurrencyBot::shouldSellSync(const ExchangeController::OrderResult&
         if(previousTickerResult != tickerResult)
         {
             LOG_INFO << "purchasePrice: " << purchasePrice
-                    << " current gain=" << gain
+                    << " current gain=" << tickerResult.last/purchasePrice
                     << " current lossThreshold=" << lossThreshold
                     << " tickerResult " << tickerResult.toString();
             LOG_INFO << "OrderBook: " << _exchangeController.getOrderBook(_pairId);
@@ -91,13 +100,13 @@ void NewListedCurrencyBot::shouldSellSync(const ExchangeController::OrderResult&
             return;
     }
 
-    // faire un algo qui plus high24 est élevé du prix d'entrée, plus la limit de vente sera proche ?
+    LOG_INFO << "key pressed, stopping...";
 }
 
 void NewListedCurrencyBot::watch() const
 {
     ExchangeController::TickerResult previousTickerResult;
-    while(true)
+    while(!tools::kbhit())
     {
         const ExchangeController::TickerResult tickerResult = _exchangeController.getSpotTicker(_pairId);
         if(previousTickerResult != tickerResult)
@@ -107,8 +116,6 @@ void NewListedCurrencyBot::watch() const
             previousTickerResult = tickerResult;
         }
     }
-
-    // faire un algo qui plus high24 est élevé du prix d'entrée, plus la limit de vente sera proche ?
 }
 
 ExchangeController::OrderResult NewListedCurrencyBot::sellAll(const ExchangeController::OrderResult& buyOrderResult)

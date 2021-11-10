@@ -118,16 +118,14 @@ void KucoinCPP::getTickersGeneric(const std::string url, SpotTickersResult &json
 		LOG_ERROR <<  "Failed to get anything.";
 }
 
-void KucoinCPP::send_limit_order ( 
+void KucoinCPP::send_market_order ( 
 	const std::string& currency_pair, 
 	const Side side,
-	const TimeInForce timeInForce,
-	double quantity,
-	double price,
+	double quoteCurrencyquantity,
 	Json::Value &json_result ) const
 {
 	//LOG_DEBUG;
-	//CHRONO_THIS_SCOPE;
+	CHRONO_THIS_SCOPE;
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 )
 	{
@@ -136,24 +134,19 @@ void KucoinCPP::send_limit_order (
 	}
 
 	std::string url(KUCOIN_HOST);
-	std::string prefix("/api/v4/spot/orders");
+	std::string prefix("/api/v1/orders");
 	url += prefix;
 
 	Json::Value bodyJson;
-	bodyJson["text"] = """";
-	bodyJson["currency_pair"] = currency_pair;
-	bodyJson["type"] = "limit";
-	bodyJson["account"] = "spot";
+	bodyJson["clientOid"] = std::to_string(tools::get_current_epoch());
 	bodyJson["side"] = std::string(magic_enum::enum_name(side));
-	bodyJson["iceberg"] = "0";
-	bodyJson["amount"] = quantity;
-	bodyJson["price"] = price;
-	bodyJson["time_in_force"] = std::string(magic_enum::enum_name(timeInForce));
-	bodyJson["auto_borrow"] = false;
-
+	bodyJson["symbol"] = currency_pair;
+	bodyJson["type"] = "market";
+	bodyJson["stp"] = "CO";
+	bodyJson["funds"] = quoteCurrencyquantity;
 	std::string body = bodyJson.toStyledString();
 
-	//LOG_DEBUG << "url = " << url << " body = " << body;
+	LOG_DEBUG << "url = " << url << " body = " << body;
 	
 	std::string action("POST");
 	const auto httpHeader = generateSignedHttpHeader(action, prefix, body);
