@@ -43,6 +43,7 @@ class GateIoCPP {
 			Json::Value &json_result ) const;
 		 void get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result) const;
 		 void getOrderBook(const std::string& currencyPair, std::string &result) const;
+		 void getAccountBalances(Json::Value &result) const;
 
 		private:
 		std::string api_key = "";

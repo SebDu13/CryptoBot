@@ -14,7 +14,7 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
     ("help", "Make sure to have at least limitPrice*quantity available on the wallet")
     ("id", po::value<std::string>(), "Set new currency identifier. Ex: ETH_USDT")
     ("limitPrice", po::value<double>(), "Set limit price. Put a large price to have more chance to be executed")
-    ("quantity", po::value<double>(), "Set quantity")
+    ("quantity", po::value<double>(), "Set quantity. If not set, it will use the total amount available on the wallet")
     ("withConsole", "Send logs on console");
 
     po::variables_map vm;        
@@ -45,11 +45,6 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
 
     if (vm.count("quantity")) 
         _quantity = Quantity(vm["quantity"].as<double>());
-    else 
-    {
-        LOG_ERROR << "quantity was not set. --help for more details";
-        return Status::Failure;
-    }
 
     if (vm.count("withConsole")) 
         _withConsole = true;
@@ -84,7 +79,7 @@ std::string BotConfig::toString() const
     stream << "*** BotConfig: ***" << std::endl;
     stream << "pairId=" << _pairId << std::endl;
     stream << "limitBuyPrice=" << _limitBuyPrice.value << std::endl;
-    stream << "quantity=" << _quantity.value << std::endl;
+    if(_quantity) stream << "quantity=" << *_quantity << std::endl;
     stream << "withConsole=" << _withConsole << std::endl;
 
     return stream.str();

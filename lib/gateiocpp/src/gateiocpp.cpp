@@ -18,6 +18,20 @@
 
 namespace{
 
+void convertToJson(const std::string& input, Json::Value& output)
+{
+	try 
+	{
+		Json::Reader reader;
+		output.clear();	
+		reader.parse( input , output );
+	} 
+	catch ( std::exception &e ) 
+	{
+		LOG_ERROR <<  "Error ! " << e.what(); 
+	}
+}
+
 size_t curl_cb( void *content, size_t size, size_t nmemb, std::string *buffer ) 
 {	
 	buffer->append((char*)content, size*nmemb);
@@ -78,16 +92,7 @@ void GateIoCPP::getGeneric(const std::string& url, ResultType &json_result) cons
 	{	
 		if constexpr(std::is_same<ResultType, Json::Value>::value)
 		{
-			try 
-			{
-				Json::Reader reader;
-				json_result.clear();	
-				reader.parse( str_result , json_result );
-			} 
-			catch ( std::exception &e ) 
-			{
-				LOG_ERROR <<  "Error ! " << e.what(); 
-			}   
+			convertToJson(str_result, json_result);
 		}
 		if constexpr(std::is_same<ResultType, std::string>::value)
 		{
@@ -149,19 +154,32 @@ void GateIoCPP::send_limit_order (
 	const auto httpHeader = generateSignedHttpHeader(action, prefix, body);
 
 	std::string result;
-	curl_api_with_header( url, httpHeader, body, action, result ) ;
+	curl_api_with_header( url, httpHeader, body, action, result );
 	if ( result.size() > 0 ) 
 	{
-		try 
-		{
-			Json::Reader reader;
-			json_result.clear();	
-			reader.parse( result , json_result );
-	    } 
-		catch ( std::exception &e ) 
-		{
-		 	LOG_ERROR << " Error ! " << e.what(); 
-		}   
+		convertToJson(result, json_result);
+	} 
+	else 
+		LOG_ERROR << "Failed to get anything.";
+}
+
+void GateIoCPP::getAccountBalances(Json::Value &result) const
+{
+	std::string url(GATEIO_HOST);
+	std::string prefix("/api/v4/wallet/total_balance");
+	url += prefix;
+	std::string action("GET");
+	std::string body;
+	std::string stringResult;
+
+	const auto httpHeader = generateSignedHttpHeader(action, prefix, body);
+	curl_api_with_header( url, httpHeader, body, action, stringResult );
+
+	LOG_INFO << stringResult;
+
+	if ( stringResult.size() > 0 ) 
+	{
+		convertToJson(stringResult, result);
 	} 
 	else 
 		LOG_ERROR << "Failed to get anything.";

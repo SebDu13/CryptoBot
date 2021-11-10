@@ -30,8 +30,8 @@ int main(int argc, char **argv)
 	LOG_INFO << botConfig.toString();
 
 	// à construire via un fichier de config ? 
-	//Bot::ThresholdService thresholdService({{1.2, 0.75}, {1.5, 0.80}, {1.8, 0.85}, {2, 0.9}});
-	Bot::ThresholdService thresholdService({{1.2, 0.8}, {1.5, 0.85}, {1.8, 0.9}, {2, 0.9}});
+	Bot::ThresholdService thresholdService({{1.2, 0.75}, {1.5, 0.80}, {1.8, 0.85}, {2, 0.9}});
+	//Bot::ThresholdService thresholdService({{1.2, 0.8}, {1.5, 0.85}, {1.8, 0.9}, {2, 0.9}});
 
 	// *** KUCOIN ***
 	/*Json::Value result24hr;
@@ -45,17 +45,14 @@ int main(int argc, char **argv)
 	}*/
 	// ***
 
-
 	// *** GATEIO ***
 	ExchangeController::GateioController gateioController{botConfig.getApiKeys()};
 	Bot::NewListedCurrencyBot newListedCurrencyBot(
 		gateioController
-		, botConfig.getPairId()
-		, botConfig.getLimitBuyPrice()
-		, botConfig.getQuantity()
+		, botConfig
 		, thresholdService);
 
-	newListedCurrencyBot.run();
+	//newListedCurrencyBot.run();
 	//newListedCurrencyBot.watch();
 	// ***
 

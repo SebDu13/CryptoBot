@@ -2,6 +2,7 @@
 #include <string>
 #include "exchangeController/AbstractExchangeController.hpp"
 #include "BotType.hpp"
+#include "BotConfig.hpp"
 #include "ThresholdService.hpp"
 
 /* TODO:
@@ -17,9 +18,7 @@ class NewListedCurrencyBot
 {
     public:
     NewListedCurrencyBot(const ExchangeController::AbstractExchangeController& exchangeController
-        , std::string pairId
-        , Price limitBuyPrice
-        , Quantity quantity
+        , const BotConfig& botconfig
         , ThresholdService thresholdService);
         
     virtual ~NewListedCurrencyBot();
@@ -32,11 +31,12 @@ class NewListedCurrencyBot
     ThresholdService _thresholdService;
     const std::string _pairId;
     Price _limitBuyPrice;
-    double _quantity;
+    Quantity _quantity;
 
     void shouldSellSync(const ExchangeController::OrderResult& buyOrderResult) const;
     ExchangeController::OrderResult sellAll(const ExchangeController::OrderResult& buyOrderResult);
     std::optional<ExchangeController::OrderResult> buySync();
+    double getSmallPrice(double price) const;
 };
 
 } /* end namespace Bot */ 

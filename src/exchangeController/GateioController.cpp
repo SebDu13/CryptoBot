@@ -227,4 +227,24 @@ OrderResult GateioController::sendOrder(const std::string& currencyPair, const S
         return {status, 0, 0, 0, 0};
 }
 
+double GateioController::getMinPrice() const
+{
+    return MIN_ORDER_PRICE;
+}
+
+Bot::Quantity GateioController::computeMaxQuantity(double price) const
+{
+    Json::Value result;
+    gateIoAPI.getAccountBalances(result);
+
+    if(result["details"]["spot"]["currency"] == "USDT")
+    {
+        double quantity = std::stod(result["details"]["spot"]["amount"].asString());
+        LOG_INFO << "There is " << quantity << " USDT on spot account";
+        return Bot::Quantity{quantity};
+    }
+
+    return Bot::Quantity{};
+}
+
 } /* end of namespace ExchangeController*/

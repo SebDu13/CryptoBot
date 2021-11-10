@@ -1,3 +1,5 @@
+#include <optional>
+#include <math.h> 
 #include "NewListedCurrencyBot.hpp"
 #include "chrono.hpp"
 #include "logger.hpp"
@@ -7,16 +9,22 @@ namespace Bot
 {
 
 NewListedCurrencyBot::NewListedCurrencyBot(const ExchangeController::AbstractExchangeController& exchangeController
-        , std::string pairId
-        , Price limitBuyPrice
-        , Quantity quantity
+        , const BotConfig& botConfig
         , ThresholdService thresholdService)
 : _exchangeController(exchangeController)
-, _pairId(pairId)
-, _limitBuyPrice(limitBuyPrice)
-, _quantity(quantity)
+, _pairId(botConfig.getPairId())
+, _limitBuyPrice(botConfig.getLimitBuyPrice())
 , _thresholdService(thresholdService)
 {
+    if(auto quantityOpt = botConfig.getQuantity())
+        _quantity = *quantityOpt;
+    else
+    {
+        const double percent = 0.95;
+        _quantity = Quantity{floor((_exchangeController.computeMaxQuantity(_limitBuyPrice) * percent)/_limitBuyPrice)};
+        LOG_INFO << "Quantity automatically computed to " << _quantity << " (" << percent << " of the max amount available)";
+    }
+    LOG_INFO << "Max position size: " << _quantity * _limitBuyPrice << " USDT";
 }
 
 NewListedCurrencyBot::~NewListedCurrencyBot()
@@ -58,16 +66,17 @@ std::optional<ExchangeController::OrderResult> NewListedCurrencyBot::buySync()
     do
     {
         CHRONO_THIS_SCOPE;
-        buyOrderResult = _exchangeController.sendOrder(_pairId, ExchangeController::Side::buy , _quantity, _limitBuyPrice);
-
-        if(buyOrderResult.status != ExchangeController::OrderStatus::InvalidCurrency)
-            LOG_DEBUG << magic_enum::enum_name(buyOrderResult.status);
-
         if(tools::kbhit())
         {
             LOG_INFO << "key pressed, stopping...";
             return std::nullopt;
         }
+
+        buyOrderResult = _exchangeController.sendOrder(_pairId, ExchangeController::Side::buy , _quantity, _limitBuyPrice);
+
+        if(buyOrderResult.status != ExchangeController::OrderStatus::InvalidCurrency)
+            LOG_DEBUG << magic_enum::enum_name(buyOrderResult.status);
+
 
     } while (buyOrderResult.status == ExchangeController::OrderStatus::InvalidCurrency);
 
@@ -89,7 +98,7 @@ void NewListedCurrencyBot::shouldSellSync(const ExchangeController::OrderResult&
         if(previousTickerResult != tickerResult)
         {
             LOG_INFO << "purchasePrice: " << purchasePrice
-                    << " current gain=" << tickerResult.last/purchasePrice
+                    << " current GAIN=" << tickerResult.last/purchasePrice
                     << " current lossThreshold=" << lossThreshold
                     << " tickerResult " << tickerResult.toString();
             LOG_INFO << "OrderBook: " << _exchangeController.getOrderBook(_pairId);
@@ -123,10 +132,16 @@ ExchangeController::OrderResult NewListedCurrencyBot::sellAll(const ExchangeCont
     if(buyOrderResult.amount)
     {
         double amountLeft = buyOrderResult.amount - buyOrderResult.fee;
-        double sellPrice = (buyOrderResult.fillPrice / buyOrderResult.amount)*0.2; // 20% of the price we bought then we are sure to be executed
+        double sellPrice = getSmallPrice(buyOrderResult.fillPrice / buyOrderResult.amount); // 20% of the price we bought then we are sure to be executed
         return _exchangeController.sendOrder(_pairId, ExchangeController::Side::sell, amountLeft, sellPrice);
     }
     return ExchangeController::OrderResult();
+}
+
+double NewListedCurrencyBot::getSmallPrice(double price) const
+{
+    const double smallPrice = price *0.2;
+    return smallPrice < _exchangeController.getMinPrice() ? _exchangeController.getMinPrice() : smallPrice;
 }
 
 } /* end namespace Bot */ 
