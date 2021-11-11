@@ -29,6 +29,8 @@ int main(int argc, char **argv)
 	Logger::init(Logger::FilterLevel::Debug, botConfig.getPairId(), botConfig.getWithConsole());
 	LOG_INFO << botConfig.toString();
 
+	Bot::ThresholdService thresholdService(botConfig.getThresholConfig());
+
 	// *** KUCOIN ***
 	/*Json::Value result24hr;
 	Json::Value resultTicker;
