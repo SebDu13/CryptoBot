@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 #include <optional>
 #include "BotType.hpp"
 
@@ -16,11 +17,14 @@ namespace Bot
         ApiKeys getApiKeys() const;
         bool getWithConsole() const {return _withConsole;};
         std::string toString() const;
+        PriceWatcherConfig getPriceWatcherConfig() const;
+        ThresholdServiceConfig getThresholConfig() const;
 
         private:
         std::string _pairId;
         Price _limitBuyPrice; // generally large
         std::optional<Quantity> _quantity;
         bool _withConsole;
+        bool _greedyMode; // good for not listed token yet
     };
 }

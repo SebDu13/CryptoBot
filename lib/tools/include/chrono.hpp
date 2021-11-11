@@ -7,8 +7,6 @@
 namespace tools
 {
     // should move this one in an other file
-    bool kbhit();
-
     class Chrono
     {
         public:
@@ -19,6 +17,6 @@ namespace tools
         const char* fileName;
         const size_t line;
         const char* functionName;
-        std::chrono::_V2::system_clock::time_point startTime, stopTime;
+        std::chrono::_V2::system_clock::time_point startTime;
     };
 }

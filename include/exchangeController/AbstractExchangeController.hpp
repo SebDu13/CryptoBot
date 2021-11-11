@@ -118,6 +118,8 @@ class AbstractExchangeController
         virtual std::string getOrderBook(const std::string& currencyPair) const =0;
         virtual OrderResult sendOrder(const std::string& currency_pair, const Side side, double quantity, double price) const  =0;
         virtual Bot::Quantity computeMaxQuantity(double price) const=0;
+        // the Min order size (amount * price) the exchange accepts. For instance 1 on GateIO
+        virtual double getMinOrderSize() const = 0;
 };
 
 } /* end ExchangeController namespace */ 

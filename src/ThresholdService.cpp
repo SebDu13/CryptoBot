@@ -3,21 +3,21 @@
 
 namespace Bot
 {
-    ThresholdService::ThresholdService(std::vector<Threshold> thresholds): _thresholds(thresholds)
+    ThresholdService::ThresholdService(ThresholdServiceConfig config): _config(config)
     {
-        if(thresholds.empty())
-            throw std::runtime_error("ThresholdService: thresholds vector cannot be null");
-        std::sort(_thresholds.begin(), _thresholds.end());
+        _a = (_config.highBound.lossThreshold - _config.lowBound.lossThreshold) 
+            / (_config.highBound.profit - _config.lowBound.profit);
+
+        _b = _config.highBound.lossThreshold - _a * _config.highBound.profit;
     }
 
     double ThresholdService::getLossThreshold(double profitPercent) const
     {
-        for(auto& threshold :_thresholds)
-        {
-            if(profitPercent <= threshold.profit)
-                return threshold.lossThreshold;
-        }
+        if(profitPercent <= _config.lowBound.profit)
+            return _config.lowBound.lossThreshold;
+        if(profitPercent >= _config.highBound.profit)
+            return _config.highBound.lossThreshold;
 
-        return _thresholds.back().lossThreshold;
+        return _a * profitPercent + _b;
     }
 }

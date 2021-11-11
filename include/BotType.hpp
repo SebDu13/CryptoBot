@@ -1,7 +1,30 @@
 #pragma once
+#include <string>
 
 namespace Bot
 {
+
+struct Threshold
+{
+    double profit;
+    double lossThreshold;
+
+    bool operator<(const Threshold& other) const
+    {
+        return profit < other.profit;
+    }
+};
+
+struct ThresholdServiceConfig
+{
+    Threshold lowBound, highBound;
+};
+
+struct PriceWatcherConfig
+{
+    double thresholdPercent;
+    unsigned int timeSec;
+};
 
 enum class Status
 {

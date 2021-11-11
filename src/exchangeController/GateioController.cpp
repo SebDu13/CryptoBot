@@ -242,4 +242,9 @@ Bot::Quantity GateioController::computeMaxQuantity(double price) const
     return Bot::Quantity{};
 }
 
+double GateioController::getMinOrderSize() const
+{
+    return 1;
+}
+
 } /* end of namespace ExchangeController*/

@@ -15,7 +15,8 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
     ("id", po::value<std::string>(), "Set new currency identifier. Ex: ETH_USDT")
     ("limitPrice", po::value<double>(), "Set limit price. Put a large price to have more chance to be executed")
     ("quantity", po::value<double>(), "Set quantity. If not set, it will use the total amount available on the wallet")
-    ("withConsole", "Send logs on console");
+    ("withConsole", "Send logs on console")
+    ("greedy", "Duration used to sell if the the price doesn't move and price thresholds are more permissive.");
 
     po::variables_map vm;        
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -50,6 +51,9 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
         _withConsole = true;
     else
         LOG_INFO << "withConsole was set to " << false;
+    
+    if (vm.count("greedy")) 
+        _greedyMode = true;
 
     return Status::Success;
 }
@@ -81,7 +85,32 @@ std::string BotConfig::toString() const
     stream << "limitBuyPrice=" << _limitBuyPrice.value << std::endl;
     if(_quantity) stream << "quantity=" << *_quantity << std::endl;
     stream << "withConsole=" << _withConsole << std::endl;
+    stream << "greedy=" << _greedyMode << std::endl;
 
     return stream.str();
 }
+
+PriceWatcherConfig BotConfig::getPriceWatcherConfig() const
+{
+    if(_greedyMode)
+        return {.thresholdPercent=0.15, .timeSec = 7};
+    return {.thresholdPercent=0.1, .timeSec = 5};
+}
+
+ThresholdServiceConfig BotConfig::getThresholConfig() const
+{   
+    Threshold lowBound, highBound;
+    if(_greedyMode)
+    {
+        lowBound = {.profit = 1.2, .lossThreshold=0.75};
+        highBound = {.profit = 2, .lossThreshold=0.9};
+    }
+    else
+    {
+        lowBound = {.profit = 1.2, .lossThreshold=0.8};
+        highBound = {.profit = 1.8, .lossThreshold=0.9};        
+    }
+    return {.lowBound = lowBound, .highBound = highBound};
+}
+
 }

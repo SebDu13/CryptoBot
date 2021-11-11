@@ -17,6 +17,7 @@ class GateioController: public AbstractExchangeController
     std::string getOrderBook(const std::string& currencyPair) const override;
     OrderResult sendOrder(const std::string& currencyPair, const Side side, double quantity, double price) const override;
     Bot::Quantity computeMaxQuantity(double price) const override;
+    double getMinOrderSize() const override;
 
     private:
     GateIoCPP gateIoAPI;

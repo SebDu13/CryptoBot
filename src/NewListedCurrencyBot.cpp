@@ -4,6 +4,8 @@
 #include "chrono.hpp"
 #include "logger.hpp"
 #include "magic_enum.hpp"
+#include "tools.hpp"
+#include "PriceWatcher.hpp"
 
 namespace Bot
 {
@@ -15,12 +17,13 @@ NewListedCurrencyBot::NewListedCurrencyBot(const ExchangeController::AbstractExc
 , _pairId(botConfig.getPairId())
 , _limitBuyPrice(botConfig.getLimitBuyPrice())
 , _thresholdService(thresholdService)
+, _watcherConfig(botConfig.getPriceWatcherConfig())
 {
     if(auto quantityOpt = botConfig.getQuantity())
         _quantity = *quantityOpt;
     else
     {
-        const double percent = 0.95;
+        const double percent = 0.97;
         _quantity = Quantity{floor((_exchangeController.computeMaxQuantity(_limitBuyPrice) * percent)/_limitBuyPrice)};
         LOG_INFO << "Quantity automatically computed to " << _quantity << " (" << percent << " of the max amount available)";
     }
@@ -56,7 +59,10 @@ void NewListedCurrencyBot::run()
     }
 
     const double pnl = sellOrderResult.fillPrice - sellOrderResult.fee - buyOrderResult->fillPrice - buyOrderResult->fee;
-    LOG_INFO << "Pnl: " << pnl << " USDT. " << (pnl/buyOrderResult->fillPrice)*100 << "%";
+    LOG_INFO << "Pnl: " << pnl << " USDT. " << (pnl/buyOrderResult->fillPrice)*100 << "%"
+        << ". Buy: " << buyOrderResult->fillPrice / buyOrderResult->amount << " USDT"
+        << ". Sell: " << sellOrderResult.fillPrice / sellOrderResult.amount << " USDT"
+        << " Amount: " << buyOrderResult->fillPrice << " USDT";
 
 }
 
@@ -88,6 +94,7 @@ void NewListedCurrencyBot::shouldSellSync(const ExchangeController::OrderResult&
 {
     ExchangeController::TickerResult previousTickerResult;
     const double purchasePrice = buyOrderResult.fillPrice / buyOrderResult.amount;
+    Bot::PriceWatcher priceWatcher(_watcherConfig);
 
     while(!tools::kbhit())
     {
@@ -107,6 +114,12 @@ void NewListedCurrencyBot::shouldSellSync(const ExchangeController::OrderResult&
 
         if(tickerResult.high24h != 0 && tickerResult.last < (tickerResult.high24h * lossThreshold))
             return;
+
+        if(!priceWatcher.isMoving(tickerResult.last))
+        {
+            LOG_INFO << "Price doesn't move anymore, stopping... ";
+            return;
+        }
     }
 
     LOG_INFO << "key pressed, stopping...";
@@ -115,14 +128,22 @@ void NewListedCurrencyBot::shouldSellSync(const ExchangeController::OrderResult&
 void NewListedCurrencyBot::watch() const
 {
     ExchangeController::TickerResult previousTickerResult;
+    Bot::PriceWatcher priceWatcher(_watcherConfig);
+    int i = 0;
     while(!tools::kbhit())
     {
         const ExchangeController::TickerResult tickerResult = _exchangeController.getSpotTicker(_pairId);
         if(previousTickerResult != tickerResult)
         {
             LOG_INFO << "tickerResult " << tickerResult.toString();
-            LOG_INFO << "jsonOrderBook " << _exchangeController.getOrderBook(_pairId);
+            //LOG_INFO << "jsonOrderBook " << _exchangeController.getOrderBook(_pairId);
             previousTickerResult = tickerResult;
+        }
+
+        if(!priceWatcher.isMoving(tickerResult.last))
+        {
+            LOG_INFO << "Price doesn't move anymore, stopping... ";
+            return;
         }
     }
 }
@@ -132,10 +153,15 @@ ExchangeController::OrderResult NewListedCurrencyBot::sellAll(const ExchangeCont
     if(buyOrderResult.amount)
     {
         double amountLeft = buyOrderResult.amount - buyOrderResult.fee;
-        double sellPrice = (buyOrderResult.fillPrice / buyOrderResult.amount)*0.2; // 20% of the price we bought then we are sure to be executed
+        double sellPrice = getSmallPrice(amountLeft);
         return _exchangeController.sendOrder(_pairId, ExchangeController::Side::sell, amountLeft, sellPrice);
     }
     return ExchangeController::OrderResult();
+}
+
+double NewListedCurrencyBot::getSmallPrice(double amountLeft) const
+{
+    return (_exchangeController.getMinOrderSize() * 1.1) / amountLeft;
 }
 
 } /* end namespace Bot */ 

@@ -32,11 +32,12 @@ class NewListedCurrencyBot
     const std::string _pairId;
     Price _limitBuyPrice;
     Quantity _quantity;
+    PriceWatcherConfig _watcherConfig;
 
     void shouldSellSync(const ExchangeController::OrderResult& buyOrderResult) const;
     ExchangeController::OrderResult sellAll(const ExchangeController::OrderResult& buyOrderResult);
     std::optional<ExchangeController::OrderResult> buySync();
-    double getSmallPrice(double price) const;
+    double getSmallPrice(double amountLeft) const;
 };
 
 } /* end namespace Bot */ 
