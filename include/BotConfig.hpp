@@ -21,10 +21,10 @@ namespace Bot
         ThresholdServiceConfig getThresholConfig() const;
 
         private:
-        std::string _pairId;
-        Price _limitBuyPrice; // generally large
-        std::optional<Quantity> _quantity;
-        bool _withConsole;
-        bool _greedyMode; // good for not listed token yet
+        std::string _pairId = "";
+        Price _limitBuyPrice = Price(); // generally large
+        std::optional<Quantity> _quantity = std::nullopt;
+        bool _withConsole = false;
+        bool _greedyMode = false; // good for not listed token yet
     };
 }

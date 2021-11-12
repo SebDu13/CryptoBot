@@ -1,5 +1,6 @@
 #include <cmath>
 #include "PriceWatcher.hpp"
+#include "logger.hpp"
 
 namespace Bot
 {
@@ -22,7 +23,10 @@ bool PriceWatcher::isMoving(double price)
     
     const double movePercent = abs(price - _previousPrice)/_previousPrice;
     if(movePercent > _thresholdPercent)
+    {
         _startTime = std::chrono::high_resolution_clock::now();
+        LOG_DEBUG << "movePercent=" << movePercent << " reset timer";
+    }
 
     if(auto durationMs = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-_startTime).count();
          durationMs < _timeMilliSec)

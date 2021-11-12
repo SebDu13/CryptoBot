@@ -16,6 +16,7 @@
 #include "BotType.hpp"
 #include "BotConfig.hpp"
 #include "ThresholdService.hpp"
+#include "tools.hpp"
 
 
 int main(int argc, char **argv) 
@@ -50,9 +51,8 @@ int main(int argc, char **argv)
 		, botConfig
 		, thresholdService);
 
-	//newListedCurrencyBot.run();
-	newListedCurrencyBot.watch();
-	// ***
+	newListedCurrencyBot.run();
+	//newListedCurrencyBot.watch();
 
 	return 0;	
 }

@@ -121,7 +121,7 @@ namespace ExchangeController{
 
 GateioController::GateioController(const Bot::ApiKeys& apiKeys):gateIoAPI(apiKeys.pub, apiKeys.secret)
 {
-    GateIoCPP::CurrencyPairsResult result;
+    /*GateIoCPP::CurrencyPairsResult result;
     gateIoAPI.get_currency_pairs(result);
     //result = "{\"id\":\"STRONG_USDT\",\"base\":\"STRONG\",\"quote\":\"USDT\",\"fee\":\"0.2\",\"min_quote_amount\":\"1\",\"amount_precision\":3,\"precision\":2,\"trade_status\":\"tradable\",\"sell_start\":0,\"buy_start\":0},{\"id\":\"POUETTE\",\"base\":\"STRONG\",\"quote\":\"USDT\",\"fee\":\"0.2\",\"min_quote_amount\":\"1\",\"amount_precision\":3,\"precision\":2,\"trade_status\":\"tradable\",\"sell_start\":0,\"buy_start\":0}";
     if(!sanityCheck(result))
@@ -129,7 +129,7 @@ GateioController::GateioController(const Bot::ApiKeys& apiKeys):gateIoAPI(apiKey
     
     allCurrencyPairsCache = extractPairsfromJson<decltype(allCurrencyPairsCache)>(result);
     rawCurrencyPairsResultSize = result.size();
-    LOG_INFO << allCurrencyPairsCache.size() << " currency pairs listed on GateIO"; 
+    LOG_INFO << allCurrencyPairsCache.size() << " currency pairs listed on GateIO"; */
 }
 
 GateioController::~GateioController()

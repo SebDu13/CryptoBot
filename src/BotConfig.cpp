@@ -94,7 +94,7 @@ PriceWatcherConfig BotConfig::getPriceWatcherConfig() const
 {
     if(_greedyMode)
         return {.thresholdPercent=0.15, .timeSec = 7};
-    return {.thresholdPercent=0.1, .timeSec = 5};
+    return {.thresholdPercent=0.1, .timeSec = 7};
 }
 
 ThresholdServiceConfig BotConfig::getThresholConfig() const

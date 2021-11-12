@@ -13,6 +13,7 @@
 #include "magic_enum.hpp"
 #include "sha.hpp"
 #include "chrono.hpp"
+#include "tools.hpp"
 
 #define GATEIO_HOST "https://api.gateio.ws"
 
@@ -142,7 +143,7 @@ void GateIoCPP::send_limit_order (
 	bodyJson["side"] = std::string(magic_enum::enum_name(side));
 	bodyJson["iceberg"] = "0";
 	bodyJson["amount"] = std::to_string(quantity);
-	bodyJson["price"] = std::to_string(price);
+	bodyJson["price"] = tools::to_string_exact(price);
 	bodyJson["time_in_force"] = std::string(magic_enum::enum_name(timeInForce));
 	bodyJson["auto_borrow"] = false;
 

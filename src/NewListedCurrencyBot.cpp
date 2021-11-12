@@ -58,11 +58,13 @@ void NewListedCurrencyBot::run()
         return;
     }
 
-    const double pnl = sellOrderResult.fillPrice - sellOrderResult.fee - buyOrderResult->fillPrice - buyOrderResult->fee;
-    LOG_INFO << "Pnl: " << pnl << " USDT. " << (pnl/buyOrderResult->fillPrice)*100 << "%"
-        << ". Buy: " << buyOrderResult->fillPrice / buyOrderResult->amount << " USDT"
-        << ". Sell: " << sellOrderResult.fillPrice / sellOrderResult.amount << " USDT"
-        << " Amount: " << buyOrderResult->fillPrice << " USDT";
+    const double buyPrice = buyOrderResult->fillPrice / buyOrderResult->amount;
+    const double sellPrice = sellOrderResult.fillPrice / sellOrderResult.amount;
+    const double pnl = sellOrderResult.fillPrice - buyOrderResult->fillPrice - (buyOrderResult->fee * buyPrice) - (sellOrderResult.fee * sellPrice);
+    LOG_INFO << "Pnl: " << pnl << " USDT, " << (pnl/buyOrderResult->fillPrice)*100 << "%."
+        << " Buy: " << buyPrice << " USDT."
+        << " Sell: " << sellPrice << " USDT."
+        << " Amount invested: " << buyOrderResult->fillPrice << " USDT.";
 
 }
 
@@ -161,7 +163,7 @@ ExchangeController::OrderResult NewListedCurrencyBot::sellAll(const ExchangeCont
 
 double NewListedCurrencyBot::getSmallPrice(double amountLeft) const
 {
-    return (_exchangeController.getMinOrderSize() * 1.1) / amountLeft;
+    return (_exchangeController.getMinOrderSize() * 1.3) / amountLeft;
 }
 
 } /* end namespace Bot */ 
