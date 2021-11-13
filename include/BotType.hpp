@@ -1,29 +1,41 @@
 #pragma once
 #include <string>
+#include "LinearExtrapoler.hpp"
 
 namespace Bot
 {
 
-struct Threshold
+// The idea here is more the profit increasing,
+// more the lossThreshold becoming small and less risky
+struct PriceThreshold: public tools::Extrapolable
 {
     double profit;
     double lossThreshold;
 
-    bool operator<(const Threshold& other) const
-    {
-        return profit < other.profit;
-    }
+    double getX() const override { return profit;};
+    double getY() const override { return lossThreshold;};
 };
 
-struct ThresholdServiceConfig
+// The idea here is more the profit increasing,
+// more the timeSec in position if price doesn't move becoming small and less risky
+struct TimeThreshold: tools::Extrapolable
 {
-    Threshold lowBound, highBound;
-};
-
-struct PriceWatcherConfig
-{
-    double thresholdPercent;
+    double profit;
     unsigned int timeSec;
+
+    double getX() const override { return profit;};
+    double getY() const override { return timeSec;};
+};
+
+struct PriceThresholdConfig
+{
+    PriceThreshold lowBound, highBound;
+};
+
+struct TimeThresholdConfig
+{
+    double priceThresholdPercent;
+    TimeThreshold lowBound, highBound;
 };
 
 enum class Status

@@ -5,14 +5,15 @@
 namespace Bot
 {
 
-PriceWatcher::PriceWatcher(PriceWatcherConfig config)
-: _thresholdPercent(config.thresholdPercent)
-, _timeMilliSec(config.timeSec *1000)
+PriceWatcher::PriceWatcher(TimeThresholdConfig config)
+: _thresholdPercent(config.priceThresholdPercent)
+, _timeThresholdExtrapoler(config.lowBound, config.highBound)
 {
     _startTime = std::chrono::high_resolution_clock::now();
 }
 
-bool PriceWatcher::isMoving(double price)
+// profit: 1.2 for 20% profit
+bool PriceWatcher::isMoving(double price, double profit)
 {
     if(!_previousPriceIsInit)
     {
@@ -28,10 +29,14 @@ bool PriceWatcher::isMoving(double price)
         LOG_DEBUG << "movePercent=" << movePercent << " reset timer";
     }
 
+    double timeThreshold = _timeThresholdExtrapoler.extrapolate(profit);
+    //LOG_DEBUG << "profit=" << profit << " timeThreshold " << timeThreshold << " sec";
+
     if(auto durationMs = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-_startTime).count();
-         durationMs < _timeMilliSec)
+         durationMs < ( timeThreshold* 1000))
         return true;
 
+    LOG_INFO << "price=" << price << " does not move since " << timeThreshold << " sec";
     return false;
 }
 

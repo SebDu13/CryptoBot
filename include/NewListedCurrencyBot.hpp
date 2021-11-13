@@ -3,7 +3,7 @@
 #include "exchangeController/AbstractExchangeController.hpp"
 #include "BotType.hpp"
 #include "BotConfig.hpp"
-#include "ThresholdService.hpp"
+#include "LinearExtrapoler.hpp"
 
 /* TODO:
 1- récuperer l'heure de lancement grace à une vente limite qui rate et qui donne:
@@ -18,8 +18,7 @@ class NewListedCurrencyBot
 {
     public:
     NewListedCurrencyBot(const ExchangeController::AbstractExchangeController& exchangeController
-        , const BotConfig& botconfig
-        , ThresholdService thresholdService);
+        , const BotConfig& botconfig);
         
     virtual ~NewListedCurrencyBot();
     void run();
@@ -28,16 +27,15 @@ class NewListedCurrencyBot
 
     private:    
     const ExchangeController::AbstractExchangeController& _exchangeController;
-    ThresholdService _thresholdService;
     const std::string _pairId;
     Price _limitBuyPrice;
     Quantity _quantity;
-    PriceWatcherConfig _watcherConfig;
+    PriceThresholdConfig _priceThresholdConfig;
+    TimeThresholdConfig _timeThreasholdConfig;
 
     void shouldSellSync(const ExchangeController::OrderResult& buyOrderResult) const;
     ExchangeController::OrderResult sellAll(const ExchangeController::OrderResult& buyOrderResult);
     std::optional<ExchangeController::OrderResult> buySync();
-    double getSmallPrice(double amountLeft) const;
 };
 
 } /* end namespace Bot */ 

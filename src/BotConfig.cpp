@@ -90,25 +90,45 @@ std::string BotConfig::toString() const
     return stream.str();
 }
 
-PriceWatcherConfig BotConfig::getPriceWatcherConfig() const
+TimeThresholdConfig BotConfig::getTimeThresholdConfig() const
 {
-    if(_greedyMode)
-        return {.thresholdPercent=0.15, .timeSec = 7};
-    return {.thresholdPercent=0.1, .timeSec = 7};
-}
-
-ThresholdServiceConfig BotConfig::getThresholConfig() const
-{   
-    Threshold lowBound, highBound;
+    TimeThreshold lowBound, highBound;
+    double thresholdPercent;
     if(_greedyMode)
     {
-        lowBound = {.profit = 1.2, .lossThreshold=0.75};
-        highBound = {.profit = 2, .lossThreshold=0.9};
+        lowBound.profit = 1.2;
+        lowBound.timeSec=8;
+        highBound.profit = 2;
+        highBound.timeSec=3;
+        thresholdPercent=0.15;
     }
     else
     {
-        lowBound = {.profit = 1.2, .lossThreshold=0.8};
-        highBound = {.profit = 1.8, .lossThreshold=0.9};        
+        lowBound.profit = 1.2;
+        lowBound.timeSec=5;
+        highBound.profit = 1.8;
+        highBound.timeSec=3;
+        thresholdPercent=0.1;
+    }
+    return {.priceThresholdPercent=thresholdPercent, .lowBound = lowBound, .highBound = highBound};
+}
+
+PriceThresholdConfig BotConfig::getPriceThresholdConfig() const
+{   
+    PriceThreshold lowBound, highBound;
+    if(_greedyMode)
+    {
+        lowBound.profit = 1.2;
+        lowBound.lossThreshold=0.75;
+        highBound.profit = 2;
+        highBound.lossThreshold=0.9;
+    }
+    else
+    {
+        lowBound.profit = 1.2;
+        lowBound.lossThreshold=0.8;
+        highBound.profit = 1.8;
+        highBound.lossThreshold=0.9;
     }
     return {.lowBound = lowBound, .highBound = highBound};
 }

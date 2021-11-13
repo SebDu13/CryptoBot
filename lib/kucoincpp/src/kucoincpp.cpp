@@ -13,10 +13,25 @@
 #include "magic_enum.hpp"
 #include "sha.hpp"
 #include "chrono.hpp"
+#include "tools.hpp"
 
 #define KUCOIN_HOST "https://api.kucoin.com"
 
 namespace{
+
+void convertToJson(const std::string& input, Json::Value& output)
+{
+	try 
+	{
+		Json::Reader reader;
+		output.clear();	
+		reader.parse( input , output );
+	} 
+	catch ( std::exception &e ) 
+	{
+		LOG_ERROR <<  "Error ! " << e.what(); 
+	}
+}
 
 size_t curl_cb( void *content, size_t size, size_t nmemb, std::string *buffer ) 
 {	
@@ -103,25 +118,18 @@ void KucoinCPP::getTickersGeneric(const std::string url, SpotTickersResult &json
 
 	if ( !str_result.empty() ) 
 	{	
-		try 
-		{
-			Json::Reader reader;
-			json_result.clear();	
-			reader.parse( str_result , json_result );
-		} 
-		catch ( std::exception &e )
-		{
-		 	LOG_ERROR <<  "Error ! " << e.what(); 
-		}   
+		convertToJson(str_result, json_result);
 	}
 	else
 		LOG_ERROR <<  "Failed to get anything.";
 }
 
-void KucoinCPP::send_market_order ( 
+void KucoinCPP::sendLimitOrder ( 
 	const std::string& currency_pair, 
 	const Side side,
-	double quoteCurrencyquantity,
+	const TimeInForce timeInForce,
+	double quantity,
+	double price,
 	Json::Value &json_result ) const
 {
 	//LOG_DEBUG;
@@ -141,9 +149,12 @@ void KucoinCPP::send_market_order (
 	bodyJson["clientOid"] = std::to_string(tools::get_current_epoch());
 	bodyJson["side"] = std::string(magic_enum::enum_name(side));
 	bodyJson["symbol"] = currency_pair;
-	bodyJson["type"] = "market";
+	bodyJson["type"] = "limit";
 	bodyJson["stp"] = "CO";
-	bodyJson["funds"] = quoteCurrencyquantity;
+	bodyJson["price"] = tools::to_string_exact(price);
+	bodyJson["size"] = std::to_string(quantity);
+	bodyJson["timeInForce"] = std::string(magic_enum::enum_name(timeInForce));
+
 	std::string body = bodyJson.toStyledString();
 
 	LOG_DEBUG << "url = " << url << " body = " << body;
@@ -155,16 +166,7 @@ void KucoinCPP::send_market_order (
 	curl_api_with_header( url, httpHeader, body, action, result ) ;
 	if ( result.size() > 0 ) 
 	{
-		try 
-		{
-			Json::Reader reader;
-			json_result.clear();	
-			reader.parse( result , json_result );
-	    } 
-		catch ( std::exception &e ) 
-		{
-		 	LOG_ERROR << " Error ! " << e.what(); 
-		}   
+		convertToJson(result, json_result); 
 	} 
 	else 
 		LOG_ERROR << "Failed to get anything.";

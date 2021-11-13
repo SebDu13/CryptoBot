@@ -15,7 +15,6 @@
 #include "NewListedCurrencyBot.hpp"
 #include "BotType.hpp"
 #include "BotConfig.hpp"
-#include "ThresholdService.hpp"
 #include "tools.hpp"
 
 
@@ -30,16 +29,16 @@ int main(int argc, char **argv)
 	Logger::init(Logger::FilterLevel::Debug, botConfig.getPairId(), botConfig.getWithConsole());
 	LOG_INFO << botConfig.toString();
 
-	Bot::ThresholdService thresholdService(botConfig.getThresholConfig());
-
 	// *** KUCOIN ***
 	/*Json::Value result24hr;
 	Json::Value resultTicker;
 	KucoinCPP kucoinCPP("","");
-	int i = 2;
-	while(--i)
+	int i = 10;
+	while(true)
 	{
-		kucoinCPP.getTicker("ETH-USDT", resultTicker);
+		kucoinCPP.getTicker(botConfig.getPairId(), resultTicker);
+		LOG_DEBUG << "getTicker " << resultTicker;
+		kucoinCPP.get24HrStats(botConfig.getPairId(), resultTicker);
 		LOG_DEBUG << "result24hr " << resultTicker;
 	}*/
 	// ***
@@ -48,8 +47,7 @@ int main(int argc, char **argv)
 	ExchangeController::GateioController gateioController{botConfig.getApiKeys()};
 	Bot::NewListedCurrencyBot newListedCurrencyBot(
 		gateioController
-		, botConfig
-		, thresholdService);
+		, botConfig);
 
 	newListedCurrencyBot.run();
 	//newListedCurrencyBot.watch();

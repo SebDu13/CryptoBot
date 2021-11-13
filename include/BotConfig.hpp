@@ -17,8 +17,8 @@ namespace Bot
         ApiKeys getApiKeys() const;
         bool getWithConsole() const {return _withConsole;};
         std::string toString() const;
-        PriceWatcherConfig getPriceWatcherConfig() const;
-        ThresholdServiceConfig getThresholConfig() const;
+        TimeThresholdConfig getTimeThresholdConfig() const;
+        PriceThresholdConfig getPriceThresholdConfig() const;
 
         private:
         std::string _pairId = "";

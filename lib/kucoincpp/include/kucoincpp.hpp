@@ -15,17 +15,29 @@ class KucoinCPP {
 			sell
 		};
 
+		/* Names match with the api parameters, do not rename */
+		enum class TimeInForce
+		{
+			GTC,
+			GTT,
+			IOC,
+			FOK
+		};
+
 		 KucoinCPP(const std::string &api_key,const std::string &secret_key);
 		 virtual ~KucoinCPP();
 		 void cleanup();
 
 		// Public API
 		// pair id looks like "ETH-USDT"
-		void send_market_order ( 
-		 	const std::string& currency_pair, 
-		 	const Side side,
-		 	double quoteCurrencyquantity,
-		 	Json::Value &json_result ) const;
+		void sendLimitOrder ( 
+			const std::string& currency_pair, 
+			const Side side,
+			const TimeInForce timeInForce,
+			double quantity,
+			double price,
+			Json::Value &json_result ) const;
+
 		void getTicker(const std::string pairId, SpotTickersResult &json_result) const;
         void get24HrStats(const std::string pairId, SpotTickersResult &json_result) const;
 
