@@ -12,6 +12,7 @@
 #include "kucoincpp.hpp"
 #include "exchangeController/GateioController.hpp"
 #include "exchangeController/KucoinController.hpp"
+#include "exchangeController/ExchangeControllerFactory.hpp"
 #include "magic_enum.hpp"
 #include "ListingBot.hpp"
 #include "BotType.hpp"
@@ -29,7 +30,11 @@ int main(int argc, char **argv)
 	if(botConfig.loadOptionsFromMain(argc, argv) == Status::Failure)
 		return -1;
 
-	Logger::init(Logger::FilterLevel::Debug, botConfig.getPairId(), botConfig.getWithConsole());
+	Logger::init(Logger::FilterLevel::Debug
+		, botConfig.getPairId()
+		, botConfig.getWithConsole()
+		, std::string(magic_enum::enum_name(botConfig.getExchange())));
+
 	LOG_INFO << botConfig.toString();
 
 	// *** KUCOIN ***
@@ -61,11 +66,12 @@ int main(int argc, char **argv)
 	/*kucoinCPP.getOrder("61911e97fe8b030001e1333d", resultOrder );
 	LOG_DEBUG << "resultOrder " << resultOrder;*/
 
-	ExchangeController::KucoinController kucoinController(apiKeys);
+	/*ExchangeController::KucoinController kucoinController(apiKeys);
 	Bot::ListingBot newListedCurrencyBot(
 		kucoinController
 		, botConfig);
-	newListedCurrencyBot.run();
+	//newListedCurrencyBot.run();
+	newListedCurrencyBot.watch();
 	/*LOG_DEBUG << kucoinController.sendOrder(botConfig.getPairId()
 		, ExchangeController::Side::buy
 		, *botConfig.getQuantity()
@@ -73,13 +79,11 @@ int main(int argc, char **argv)
 
 	// ***
 
-	// *** GATEIO ***
-	/*ExchangeController::GateioController gateioController{botConfig.getApiKeys(Bot::Exchange::Gateio)};
-	Bot::ListingBot newListedCurrencyBot(
-		gateioController
+	Bot::ListingBot listingBot(
+		ExchangeController::ExchangeControllerFactory::create(botConfig)
 		, botConfig);
 
-	newListedCurrencyBot.run();*/
+	listingBot.run();
 	//newListedCurrencyBot.watch();
 
 	return 0;	

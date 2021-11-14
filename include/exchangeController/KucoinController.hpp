@@ -16,6 +16,7 @@ class KucoinController: public AbstractExchangeController
     OrderResult sendOrder(const std::string& currencyPair, const Side side, const Quantity& quantity, const Price& price) const override;
     Quantity computeMaxQuantity(const Price& price) const override;
     Quantity getMinOrderSize() const override;
+    Quantity getAmountLeft(const OrderResult& buyOrderResult) const override;
 
     private:
     KucoinCPP _kucoinAPI;

@@ -118,13 +118,8 @@ void KucoinCPP::get24HrStats(const std::string pairId, SpotTickersResult &json_r
 
 void KucoinCPP::getTickersGeneric(const std::string url, SpotTickersResult &json_result) const
 {
-	LOG_DEBUG;
-	CHRONO_THIS_SCOPE;
-
 	std::string _url(KUCOIN_HOST);  
 	_url += url;
-
-	LOG_DEBUG << "url" << _url;
 
 	std::string str_result;
 	curl_api( _url, str_result );
@@ -172,13 +167,13 @@ void KucoinCPP::sendLimitOrder (
 	bodyJson["symbol"] = currency_pair;
 	bodyJson["type"] = "limit";
 	bodyJson["stp"] = "CO";
-	bodyJson["price"] = price.toStringExact();
-	bodyJson["size"] = quantity.toStringExact();
+	bodyJson["price"] = price.toString();
+	bodyJson["size"] = quantity.toString();
 	bodyJson["timeInForce"] = std::string(magic_enum::enum_name(timeInForce));
 
 	std::string body = bodyJson.toStyledString();
 
-	LOG_DEBUG << "url = " << url << " body = " << body;
+	//LOG_DEBUG << "url = " << url << " body = " << body;
 	
 	std::string action("POST");
 	const auto httpHeader = generateSignedHttpHeader(action, prefix, body);
@@ -207,6 +202,34 @@ void KucoinCPP::getOrder (
 
 	std::string url(KUCOIN_HOST);
 	std::string prefix("/api/v1/orders/" + orderId);
+	url += prefix;
+	
+	//LOG_DEBUG << url;
+
+	std::string action("GET");
+	std::string body;
+	const auto httpHeader = generateSignedHttpHeader(action, prefix, body);
+
+	std::string result;
+	curl_api_with_header( url, httpHeader, body, action, result ) ;
+	if ( result.size() > 0 ) 
+	{
+		convertToJson(result, json_result); 
+	} 
+	else 
+		LOG_ERROR << "Failed to get anything.";
+}
+
+void KucoinCPP::getAccountBalances(Json::Value &json_result) const
+{
+	if ( api_key.size() == 0 || secret_key.size() == 0 )
+	{
+		LOG_ERROR << "API Key and Secret Key has not been set.";
+		return ;
+	}
+
+	std::string url(KUCOIN_HOST);
+	std::string prefix("/api/v1/accounts");
 	url += prefix;
 	
 	//LOG_DEBUG << url;
@@ -256,7 +279,7 @@ void KucoinCPP::curl_api_with_header(const std::string &url
 			,const std::string &action
 			, std::string &str_result) const
 {
-	CHRONO_THIS_SCOPE;
+	//CHRONO_THIS_SCOPE;
 	CURLcode res;
 
 	if( curl ) 

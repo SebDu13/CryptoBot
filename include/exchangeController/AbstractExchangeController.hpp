@@ -119,6 +119,7 @@ class AbstractExchangeController
         virtual Quantity computeMaxQuantity(const Price& price) const=0;
         // the Min order size (amount * price) the exchange accepts. For instance 1 on GateIO
         virtual Quantity getMinOrderSize() const = 0;
+        virtual Quantity getAmountLeft(const OrderResult& buyOrderResult) const = 0;
 };
 
 } /* end ExchangeController namespace */ 

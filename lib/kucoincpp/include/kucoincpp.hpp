@@ -44,6 +44,7 @@ class KucoinCPP {
 
 		void getTicker(const std::string pairId, SpotTickersResult &json_result) const;
         void get24HrStats(const std::string pairId, SpotTickersResult &json_result) const;
+		void getAccountBalances(Json::Value &json_result) const;
 
 		private:
 		std::string api_key = "";

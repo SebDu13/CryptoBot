@@ -50,12 +50,24 @@ KucoinController::~KucoinController()
 
 TickerResult KucoinController::getSpotTicker(const std::string& currencyPair) const
 {
-    //CHRONO_THIS_SCOPE;
+    CHRONO_THIS_SCOPE;
+    static size_t failureCount = 0;
     static double high_24h = 0; // artificial because not suported by the api but required
     Json::Value result;
     _kucoinAPI.getTicker(currencyPair, result);
 
-    double last = boost::lexical_cast<double>(result[0]["price"].asString());
+    if(result.get("code", Json::Value()).empty() 
+        || result.get("data", Json::Value()).empty() 
+        || result["code"] != "200000")
+    {
+        if(++failureCount > 3)
+            throw ExchangeControllerException("KucoinController::getSpotTicker cannot get Ticker *** POSITION IS OPEN ***");
+        return {};
+    }
+    failureCount = 0;
+
+    const auto& data = result["data"];
+    double last = boost::lexical_cast<double>(data["price"].asString());
 
     if(last > high_24h)
         high_24h = last;
@@ -65,8 +77,8 @@ TickerResult KucoinController::getSpotTicker(const std::string& currencyPair) co
         , .low24h = 0
         , .baseVolume = 0
         , .quoteVolume = 0
-        , .lowestAsk = boost::lexical_cast<double>(result[0]["bestAsk"].asString())
-        , .highestBid = boost::lexical_cast<double>(result[0]["bestBid"].asString())};
+        , .lowestAsk = boost::lexical_cast<double>(data["bestAsk"].asString())
+        , .highestBid = boost::lexical_cast<double>(data["bestBid"].asString())};
 }
 
 std::string KucoinController::getOrderBook(const std::string& ) const
@@ -102,13 +114,30 @@ OrderResult KucoinController::sendOrder(const std::string& currencyPair, const S
 
     Quantity KucoinController::computeMaxQuantity(const Price& price) const
     {
+        Json::Value result;
+        _kucoinAPI.getAccountBalances(result);
+        for(const auto& account : result["data"])
+        {
+            if(account["currency"] == "USDT")
+            {
+                Quantity quantity(account["available"].asString());
+                const tools::FixedPoint percent("0.97");
+
+                return Quantity{floor((double)((quantity * percent)/price))};
+            }
+        }
+        LOG_DEBUG << result;
         return Quantity();
     }
 
     Quantity KucoinController::getMinOrderSize() const
     {
-        return Quantity();
+        return Quantity{"1"};
     }
 
+    Quantity KucoinController::getAmountLeft(const OrderResult& buyOrderResult) const
+    {
+        return buyOrderResult.amount;
+    }
 
 }

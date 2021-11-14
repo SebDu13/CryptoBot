@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <memory>
 #include "exchangeController/AbstractExchangeController.hpp"
 #include "BotType.hpp"
 #include "BotConfig.hpp"
@@ -17,7 +18,7 @@ namespace Bot
 class ListingBot
 {
     public:
-    ListingBot(const ExchangeController::AbstractExchangeController& exchangeController
+    ListingBot(std::unique_ptr<ExchangeController::AbstractExchangeController> exchangeController
         , const BotConfig& botconfig);
         
     virtual ~ListingBot();
@@ -26,7 +27,7 @@ class ListingBot
     void runWithoutMonitoring(const std::string& pairId);
 
     private:    
-    const ExchangeController::AbstractExchangeController& _exchangeController;
+    std::unique_ptr<ExchangeController::AbstractExchangeController> _exchangeController;
     const std::string _pairId;
     Price _limitBuyPrice;
     Quantity _quantity;

@@ -29,13 +29,13 @@ struct FixedPoint
     std::string toString() const
     { 
         std::ostringstream os;
-        os << std::fixed << value;
+        os << std::fixed << std::setprecision(4) << value;
         return os.str();
     };
     std::string toStringExact() const
     {
         std::ostringstream os;
-        os << std::fixed << std::setprecision(std::numeric_limits<double>::digits10) << value;
+        os << std::fixed << std::setprecision(std::numeric_limits<ValueType>::max_digits10) << value;
         return os.str();
     };
 

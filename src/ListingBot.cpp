@@ -10,9 +10,9 @@
 namespace Bot
 {
 
-ListingBot::ListingBot(const ExchangeController::AbstractExchangeController& exchangeController
+ListingBot::ListingBot(std::unique_ptr<ExchangeController::AbstractExchangeController> exchangeController
     , const BotConfig& botConfig)
-: _exchangeController(exchangeController)
+: _exchangeController(std::move(exchangeController))
 , _pairId(botConfig.getPairId())
 , _limitBuyPrice(botConfig.getLimitBuyPrice())
 , _priceThresholdConfig(botConfig.getPriceThresholdConfig())
@@ -20,10 +20,15 @@ ListingBot::ListingBot(const ExchangeController::AbstractExchangeController& exc
 {
     if(auto quantityOpt = botConfig.getQuantity())
         _quantity = *quantityOpt;
+    else if(auto maxAmountOpt = botConfig.getMaxAmount())
+    {
+        _quantity = Quantity{floor((double)(*maxAmountOpt/_limitBuyPrice))};
+        LOG_INFO << "Quantity computed to " << _quantity << " according to maxAmout option";
+    }
     else
     {
-        _quantity = _exchangeController.computeMaxQuantity(_limitBuyPrice);
-        LOG_INFO << "Quantity automatically computed to " << _quantity ;
+        _quantity = _exchangeController->computeMaxQuantity(_limitBuyPrice);
+        LOG_INFO << "Quantity automatically computed to " << _quantity; 
     }
     LOG_INFO << "Max position size: " << _quantity * _limitBuyPrice << " USDT";
 }
@@ -45,7 +50,7 @@ void ListingBot::run()
     }
 
     // Wait
-    //shouldSellSync(*buyOrderResult);
+    shouldSellSync(*buyOrderResult);
     
     ExchangeController::OrderResult sellOrderResult = sellAll(*buyOrderResult);
 
@@ -60,10 +65,10 @@ void ListingBot::run()
     const auto buyPrice = buyOrderResult->fillPrice / buyOrderResult->amount;
     const auto sellPrice = sellOrderResult.fillPrice / sellOrderResult.amount;
     const auto pnl = sellOrderResult.fillPrice - buyOrderResult->fillPrice - (buyOrderResult->fee * buyPrice) - (sellOrderResult.fee * sellPrice);
-    LOG_INFO << "Pnl: " << (double)pnl << " USDT, " << (double)(pnl/buyOrderResult->fillPrice) * 100 << "%."
-        << " Buy: " << (double)buyPrice << " USDT."
-        << " Sell: " << (double)sellPrice << " USDT."
-        << " Amount invested: " << (double)buyOrderResult->fillPrice << " USDT.";
+    LOG_INFO << "Pnl: " << pnl << " USDT, " << (pnl/buyOrderResult->fillPrice) * Quantity("100") << "%."
+        << " Buy: " << buyPrice << " USDT."
+        << " Sell: " << sellPrice << " USDT."
+        << " Amount invested: " << buyOrderResult->fillPrice << " USDT.";
 
 }
 
@@ -79,7 +84,7 @@ std::optional<ExchangeController::OrderResult> ListingBot::buySync()
             return std::nullopt;
         }
 
-        buyOrderResult = _exchangeController.sendOrder(_pairId, ExchangeController::Side::buy , _quantity, _limitBuyPrice);
+        buyOrderResult = _exchangeController->sendOrder(_pairId, ExchangeController::Side::buy , _quantity, _limitBuyPrice);
 
         if(buyOrderResult.status != ExchangeController::OrderStatus::InvalidCurrency)
             LOG_DEBUG << magic_enum::enum_name(buyOrderResult.status);
@@ -100,17 +105,17 @@ void ListingBot::shouldSellSync(const ExchangeController::OrderResult& buyOrderR
 
     while(!tools::kbhit())
     {
-        const ExchangeController::TickerResult tickerResult = _exchangeController.getSpotTicker(_pairId);
+        const ExchangeController::TickerResult tickerResult = _exchangeController->getSpotTicker(_pairId);
         const double profit = tickerResult.high24h/(double)purchasePrice;
         const double lossThreshold = priceThreasholdExtrapoler.extrapolate(profit);
 
         if(previousTickerResult != tickerResult)
         {
-            LOG_INFO << "purchasePrice: " << (double)purchasePrice
+            LOG_INFO << "purchasePrice: " << purchasePrice
                     << " current PROFIT=" << ((tickerResult.last - (double)purchasePrice)/(double)purchasePrice) * 100 << "%"
                     << " current lossThreshold=" << lossThreshold
                     << " tickerResult " << tickerResult.toString();
-            //LOG_INFO << "OrderBook: " << _exchangeController.getOrderBook(_pairId);
+            //LOG_INFO << "OrderBook: " << _exchangeController->getOrderBook(_pairId);
             previousTickerResult = tickerResult;
         }
 
@@ -135,11 +140,11 @@ void ListingBot::watch() const
     double profit = 1;
     while(!tools::kbhit())
     {
-        const ExchangeController::TickerResult tickerResult = _exchangeController.getSpotTicker(_pairId);
+        const ExchangeController::TickerResult tickerResult = _exchangeController->getSpotTicker(_pairId);
         if(previousTickerResult != tickerResult)
         {
             LOG_INFO << "tickerResult " << tickerResult.toString();
-            //LOG_INFO << "jsonOrderBook " << _exchangeController.getOrderBook(_pairId);
+            //LOG_INFO << "jsonOrderBook " << _exchangeController->getOrderBook(_pairId);
             previousTickerResult = tickerResult;
         }
 
@@ -159,14 +164,14 @@ ExchangeController::OrderResult ListingBot::sellAll(const ExchangeController::Or
 {
     if(buyOrderResult.amount.value != 0)
     {
-        Quantity amountLeft = buyOrderResult.amount - buyOrderResult.fee;
+        Quantity amountLeft = _exchangeController->getAmountLeft(buyOrderResult);
         Price smallPrice = buyOrderResult.fillPrice / buyOrderResult.amount * tools::FixedPoint("0.2");
 
         // For small order smallPrice * amount can be lower than the exchange min order size and it fails
-        if(smallPrice * amountLeft < _exchangeController.getMinOrderSize())
-            smallPrice = (_exchangeController.getMinOrderSize() * tools::FixedPoint(1.1)) / amountLeft;
+        if(smallPrice * amountLeft < _exchangeController->getMinOrderSize())
+            smallPrice = (_exchangeController->getMinOrderSize() * tools::FixedPoint(1.1)) / amountLeft;
 
-        return _exchangeController.sendOrder(_pairId, ExchangeController::Side::sell, amountLeft, smallPrice);
+        return _exchangeController->sendOrder(_pairId, ExchangeController::Side::sell, amountLeft, smallPrice);
     }
     return ExchangeController::OrderResult();
 }

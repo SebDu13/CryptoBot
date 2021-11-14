@@ -8,7 +8,7 @@
 
 using namespace boost::log;
 
-void Logger::init(FilterLevel filterLevel, const std::string& pairId, bool withConsole) 
+void Logger::init(FilterLevel filterLevel, const std::string& pairId, bool withConsole, const std::string exchange) 
 {
     add_common_attributes();
 
@@ -41,7 +41,7 @@ void Logger::init(FilterLevel filterLevel, const std::string& pairId, bool withC
     }
 
     add_file_log(
-    keywords::target = "logs/", keywords::file_name = "%y%m%d_%3N_" + pairId + ".log",
+    keywords::target = "logs/", keywords::file_name = exchange + "_%y%m%d_%3N_" + pairId + ".log",
     keywords::rotation_size = 30 * 1024 * 1024,
     keywords::scan_method = sinks::file::scan_matching,
     keywords::format = logFmt);

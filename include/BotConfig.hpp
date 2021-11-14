@@ -19,12 +19,16 @@ namespace Bot
         std::string toString() const;
         TimeThresholdConfig getTimeThresholdConfig() const;
         PriceThresholdConfig getPriceThresholdConfig() const;
+        Exchange getExchange() const {return _exchange;};
+        std::optional<Quantity> getMaxAmount() const {return _maxAmount;};
 
         private:
         std::string _pairId = "";
         Price _limitBuyPrice = Price(); // generally large
         std::optional<Quantity> _quantity = std::nullopt;
         bool _withConsole = false;
-        bool _greedyMode = false; // good for not listed token yet
+        bool _greedyMode = false; // good for token not listed on any exchange
+        Exchange _exchange;
+        std::optional<Quantity> _maxAmount = std::nullopt;
     };
 }

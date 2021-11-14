@@ -1,6 +1,36 @@
 #include "BotConfig.hpp"
 #include <boost/program_options.hpp>
 #include "logger.hpp"
+#include "magic_enum.hpp"
+
+namespace{
+
+std::string printExchanges()
+{
+    std::stringstream stream;
+    stream << "Exchanges supported:";
+    for (auto name : magic_enum::enum_names<Bot::Exchange>())
+        stream << " " << name;
+    return stream.str();
+}
+
+void convertCurrencyPair(std::string& pairId, Bot::Exchange exchange)
+{
+    switch (exchange)
+    {
+    case Bot::Exchange::Kucoin:
+        LOG_DEBUG << pairId;
+        std::replace( pairId.begin(), pairId.end(), '_', '-');
+        LOG_DEBUG << pairId;
+        break;
+
+    case Bot::Exchange::Gateio:
+        std::replace( pairId.begin(), pairId.end(), '-', '_');
+        break;
+    }
+}
+
+}
 
 namespace Bot
 {
@@ -11,12 +41,14 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
 
     po::options_description desc("Allowed options");
     desc.add_options()
-    ("help", "Make sure to have at least limitPrice*quantity available on the wallet")
+    ("help", "Print help")
     ("id", po::value<std::string>(), "Set new currency identifier. Ex: ETH_USDT")
     ("limitPrice", po::value<std::string>(), "Set limit price. Put a large price to have more chance to be executed")
     ("quantity", po::value<std::string>(), "Set quantity. If not set, it will use the total amount available on the wallet")
     ("withConsole", "Send logs on console")
-    ("greedy", "Duration used to sell if the the price doesn't move and price thresholds are more permissive.");
+    ("greedy", "Duration used to sell if the the price doesn't move and price thresholds are more permissive.")
+    ("exchange", po::value<std::string>(), printExchanges().c_str())
+    ("maxAmount", po::value<std::string>(), "Max amount to trade (in USDT)");
 
     po::variables_map vm;        
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -54,6 +86,27 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
     
     if (vm.count("greedy")) 
         _greedyMode = true;
+
+    if (vm.count("exchange"))
+    {
+        if(auto exchangeOpt = magic_enum::enum_cast<Bot::Exchange>(vm["exchange"].as<std::string>()))
+            _exchange = *exchangeOpt;
+        else
+        {
+            LOG_ERROR << "invalid exchange name. " << printExchanges();
+            return Status::Failure;
+        }
+    }
+    else 
+    {
+        LOG_ERROR << "exchange was not set. --help for more details";
+        return Status::Failure;
+    }
+
+    if (vm.count("maxAmount")) 
+        _maxAmount = Quantity(vm["maxAmount"].as<std::string>());
+
+    convertCurrencyPair(_pairId, _exchange);
 
     return Status::Success;
 }
@@ -102,6 +155,7 @@ std::string BotConfig::toString() const
     if(_quantity) stream << "quantity=" << _quantity->toString() << std::endl;
     stream << "withConsole=" << _withConsole << std::endl;
     stream << "greedy=" << _greedyMode << std::endl;
+    stream << "exchange=" << magic_enum::enum_name(_exchange) << std::endl;
 
     return stream.str();
 }

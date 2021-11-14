@@ -235,7 +235,7 @@ Quantity GateioController::computeMaxQuantity(const Price& price) const
     if(result["details"]["spot"]["currency"] == "USDT")
     {
         Quantity quantity(result["details"]["spot"]["amount"].asString());
-        LOG_INFO << "There is " << quantity.toString() << " USDT on spot account";
+        LOG_INFO << "There is " << quantity << " USDT on spot account";
         const tools::FixedPoint percent("0.97");
 
         return Quantity{floor((double)((quantity * percent)/price))};
@@ -247,6 +247,11 @@ Quantity GateioController::computeMaxQuantity(const Price& price) const
 Quantity GateioController::getMinOrderSize() const
 {
     return Quantity{"1"};
+}
+
+Quantity GateioController::getAmountLeft(const OrderResult& buyOrderResult) const
+{
+    return buyOrderResult.amount - buyOrderResult.fee;
 }
 
 } /* end of namespace ExchangeController*/

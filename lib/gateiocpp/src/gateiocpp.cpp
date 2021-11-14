@@ -142,8 +142,8 @@ void GateIoCPP::send_limit_order (
 	bodyJson["account"] = "spot";
 	bodyJson["side"] = std::string(magic_enum::enum_name(side));
 	bodyJson["iceberg"] = "0";
-	bodyJson["amount"] = quantity.toStringExact();
-	bodyJson["price"] = price.toStringExact();
+	bodyJson["amount"] = quantity.toString();
+	bodyJson["price"] = price.toString();
 	bodyJson["time_in_force"] = std::string(magic_enum::enum_name(timeInForce));
 	bodyJson["auto_borrow"] = false;
 
