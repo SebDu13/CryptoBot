@@ -14,13 +14,13 @@
 namespace Bot
 {
 
-class NewListedCurrencyBot
+class ListingBot
 {
     public:
-    NewListedCurrencyBot(const ExchangeController::AbstractExchangeController& exchangeController
+    ListingBot(const ExchangeController::AbstractExchangeController& exchangeController
         , const BotConfig& botconfig);
         
-    virtual ~NewListedCurrencyBot();
+    virtual ~ListingBot();
     void run();
     void watch() const;
     void runWithoutMonitoring(const std::string& pairId);

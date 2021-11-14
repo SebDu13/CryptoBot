@@ -3,6 +3,7 @@
 #include <string>
 #include "json/json.h"
 #include <curl/curl.h>
+#include "FixedPoint.hpp"
 
 class KucoinCPP {
 	public:
@@ -16,6 +17,7 @@ class KucoinCPP {
 		};
 
 		/* Names match with the api parameters, do not rename */
+		// Good Till Canceled GTC, Good Till Time GTT, Immediate Or Cancel IOC, and Fill Or Kill FOK.
 		enum class TimeInForce
 		{
 			GTC,
@@ -24,7 +26,7 @@ class KucoinCPP {
 			FOK
 		};
 
-		 KucoinCPP(const std::string &api_key,const std::string &secret_key);
+		 KucoinCPP(const std::string &api_key,const std::string &secret_key, const std::string &pass_phrase);
 		 virtual ~KucoinCPP();
 		 void cleanup();
 
@@ -34,9 +36,11 @@ class KucoinCPP {
 			const std::string& currency_pair, 
 			const Side side,
 			const TimeInForce timeInForce,
-			double quantity,
-			double price,
+			const Quantity& quantity,
+			const Price& price,
 			Json::Value &json_result ) const;
+		
+		void getOrder( const std::string& orderId, Json::Value &json_result ) const;
 
 		void getTicker(const std::string pairId, SpotTickersResult &json_result) const;
         void get24HrStats(const std::string pairId, SpotTickersResult &json_result) const;
@@ -44,6 +48,7 @@ class KucoinCPP {
 		private:
 		std::string api_key = "";
 		std::string secret_key = "";
+		std::string passPhrase = "";
 		CURL* curl = NULL;
 
          void getTickersGeneric(const std::string url, SpotTickersResult &json_result) const;

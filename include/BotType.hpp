@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include "LinearExtrapoler.hpp"
+#include "FixedPoint.hpp"
 
 namespace Bot
 {
@@ -38,34 +39,23 @@ struct TimeThresholdConfig
     TimeThreshold lowBound, highBound;
 };
 
+enum class Exchange
+{
+    Gateio,
+    Kucoin
+};
+
 enum class Status
 {
     Success,
     Failure
 };
 
-struct Price
-{
-    explicit Price():value(0) {} ;
-    explicit Price(double price):value(price) {} ;
-    double value;
-
-    operator double() const{ return value;};
-};
-
-struct Quantity
-{
-    explicit Quantity():value(0) {} ;
-    explicit Quantity(double quantity):value(quantity) {} ;
-    double value;
-
-    operator double() const{ return value;};
-};
-
 struct ApiKeys
 {
     std::string pub;
     std::string secret;
+    std::string passphrase;
 };
 
 }

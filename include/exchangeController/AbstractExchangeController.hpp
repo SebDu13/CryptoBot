@@ -32,18 +32,18 @@ namespace ExchangeController
     struct OrderResult
     {
         OrderStatus status = OrderStatus::Unknown;
-        double fillPrice;
-        double filledTotal;
-        double amount;
-        double fee;
+        Quantity fillPrice;
+        Quantity filledTotal;
+        Quantity amount;
+        Quantity fee;
 
         inline std::string toString() const
         {
             return std::string("status=" + std::string(magic_enum::enum_name(status))
-            + " fillPrice=" + std::to_string(fillPrice)
-            + " filledTotal=" + std::to_string(filledTotal)
-            + " amount=" + std::to_string(amount)
-            + " fee=" + std::to_string(fee));
+            + " fillPrice=" + fillPrice.toString()
+            + " filledTotal=" + filledTotal.toString()
+            + " amount=" + amount.toString()
+            + " fee=" + fee.toString());
         }
 
         bool operator==(OrderResult& other)
@@ -113,13 +113,12 @@ class AbstractExchangeController
 {
     public:
         virtual ~AbstractExchangeController(){};
-        virtual CurrencyPair getNewCurrencyPairSync(const std::string& quote) const  =0;
         virtual TickerResult getSpotTicker(const std::string& currencyPair) const =0;
         virtual std::string getOrderBook(const std::string& currencyPair) const =0;
-        virtual OrderResult sendOrder(const std::string& currency_pair, const Side side, double quantity, double price) const  =0;
-        virtual Bot::Quantity computeMaxQuantity(double price) const=0;
+        virtual OrderResult sendOrder(const std::string& currency_pair, const Side side, const Quantity& quantity, const Price& price) const  =0;
+        virtual Quantity computeMaxQuantity(const Price& price) const=0;
         // the Min order size (amount * price) the exchange accepts. For instance 1 on GateIO
-        virtual double getMinOrderSize() const = 0;
+        virtual Quantity getMinOrderSize() const = 0;
 };
 
 } /* end ExchangeController namespace */ 

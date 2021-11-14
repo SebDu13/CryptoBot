@@ -1,6 +1,6 @@
 #include <optional>
 #include <math.h> 
-#include "NewListedCurrencyBot.hpp"
+#include "ListingBot.hpp"
 #include "chrono.hpp"
 #include "logger.hpp"
 #include "magic_enum.hpp"
@@ -10,7 +10,7 @@
 namespace Bot
 {
 
-NewListedCurrencyBot::NewListedCurrencyBot(const ExchangeController::AbstractExchangeController& exchangeController
+ListingBot::ListingBot(const ExchangeController::AbstractExchangeController& exchangeController
     , const BotConfig& botConfig)
 : _exchangeController(exchangeController)
 , _pairId(botConfig.getPairId())
@@ -22,17 +22,16 @@ NewListedCurrencyBot::NewListedCurrencyBot(const ExchangeController::AbstractExc
         _quantity = *quantityOpt;
     else
     {
-        const double percent = 0.97;
-        _quantity = Quantity{floor((_exchangeController.computeMaxQuantity(_limitBuyPrice) * percent)/_limitBuyPrice)};
-        LOG_INFO << "Quantity automatically computed to " << _quantity << " (" << percent << " of the max amount available)";
+        _quantity = _exchangeController.computeMaxQuantity(_limitBuyPrice);
+        LOG_INFO << "Quantity automatically computed to " << _quantity ;
     }
     LOG_INFO << "Max position size: " << _quantity * _limitBuyPrice << " USDT";
 }
 
-NewListedCurrencyBot::~NewListedCurrencyBot()
+ListingBot::~ListingBot()
 {}
 
-void NewListedCurrencyBot::run()
+void ListingBot::run()
 {
     // Wait
     std::optional<ExchangeController::OrderResult> buyOrderResult = buySync();
@@ -46,7 +45,8 @@ void NewListedCurrencyBot::run()
     }
 
     // Wait
-    shouldSellSync(*buyOrderResult);
+    //shouldSellSync(*buyOrderResult);
+    
     ExchangeController::OrderResult sellOrderResult = sellAll(*buyOrderResult);
 
     if(sellOrderResult.status != ExchangeController::OrderStatus::Closed)
@@ -57,17 +57,17 @@ void NewListedCurrencyBot::run()
         return;
     }
 
-    const double buyPrice = buyOrderResult->fillPrice / buyOrderResult->amount;
-    const double sellPrice = sellOrderResult.fillPrice / sellOrderResult.amount;
-    const double pnl = sellOrderResult.fillPrice - buyOrderResult->fillPrice - (buyOrderResult->fee * buyPrice) - (sellOrderResult.fee * sellPrice);
-    LOG_INFO << "Pnl: " << pnl << " USDT, " << (pnl/buyOrderResult->fillPrice)*100 << "%."
-        << " Buy: " << buyPrice << " USDT."
-        << " Sell: " << sellPrice << " USDT."
-        << " Amount invested: " << buyOrderResult->fillPrice << " USDT.";
+    const auto buyPrice = buyOrderResult->fillPrice / buyOrderResult->amount;
+    const auto sellPrice = sellOrderResult.fillPrice / sellOrderResult.amount;
+    const auto pnl = sellOrderResult.fillPrice - buyOrderResult->fillPrice - (buyOrderResult->fee * buyPrice) - (sellOrderResult.fee * sellPrice);
+    LOG_INFO << "Pnl: " << (double)pnl << " USDT, " << (double)(pnl/buyOrderResult->fillPrice) * 100 << "%."
+        << " Buy: " << (double)buyPrice << " USDT."
+        << " Sell: " << (double)sellPrice << " USDT."
+        << " Amount invested: " << (double)buyOrderResult->fillPrice << " USDT.";
 
 }
 
-std::optional<ExchangeController::OrderResult> NewListedCurrencyBot::buySync()
+std::optional<ExchangeController::OrderResult> ListingBot::buySync()
 {
     ExchangeController::OrderResult buyOrderResult;
     do
@@ -91,23 +91,23 @@ std::optional<ExchangeController::OrderResult> NewListedCurrencyBot::buySync()
 }
 
 
-void NewListedCurrencyBot::shouldSellSync(const ExchangeController::OrderResult& buyOrderResult) const
+void ListingBot::shouldSellSync(const ExchangeController::OrderResult& buyOrderResult) const
 {
     ExchangeController::TickerResult previousTickerResult;
-    const double purchasePrice = buyOrderResult.fillPrice / buyOrderResult.amount;
+    const Price purchasePrice = buyOrderResult.fillPrice / buyOrderResult.amount;
     Bot::PriceWatcher priceWatcher(_timeThreasholdConfig);
     tools::LinearExtrapoler priceThreasholdExtrapoler(_priceThresholdConfig.lowBound, _priceThresholdConfig.highBound);
 
     while(!tools::kbhit())
     {
         const ExchangeController::TickerResult tickerResult = _exchangeController.getSpotTicker(_pairId);
-        const double profit = tickerResult.high24h/purchasePrice;
+        const double profit = tickerResult.high24h/(double)purchasePrice;
         const double lossThreshold = priceThreasholdExtrapoler.extrapolate(profit);
 
         if(previousTickerResult != tickerResult)
         {
-            LOG_INFO << "purchasePrice: " << purchasePrice
-                    << " current PROFIT=" << ((tickerResult.last - purchasePrice)/purchasePrice)*100 << "%"
+            LOG_INFO << "purchasePrice: " << (double)purchasePrice
+                    << " current PROFIT=" << ((tickerResult.last - (double)purchasePrice)/(double)purchasePrice) * 100 << "%"
                     << " current lossThreshold=" << lossThreshold
                     << " tickerResult " << tickerResult.toString();
             //LOG_INFO << "OrderBook: " << _exchangeController.getOrderBook(_pairId);
@@ -127,7 +127,7 @@ void NewListedCurrencyBot::shouldSellSync(const ExchangeController::OrderResult&
     LOG_INFO << "key pressed, stopping...";
 }
 
-void NewListedCurrencyBot::watch() const
+void ListingBot::watch() const
 {
     ExchangeController::TickerResult previousTickerResult;
     Bot::PriceWatcher priceWatcher(_timeThreasholdConfig);
@@ -155,16 +155,16 @@ void NewListedCurrencyBot::watch() const
     }
 }
 
-ExchangeController::OrderResult NewListedCurrencyBot::sellAll(const ExchangeController::OrderResult& buyOrderResult)
+ExchangeController::OrderResult ListingBot::sellAll(const ExchangeController::OrderResult& buyOrderResult)
 {
-    if(buyOrderResult.amount)
+    if(buyOrderResult.amount.value != 0)
     {
-        double amountLeft = buyOrderResult.amount - buyOrderResult.fee;
-        double smallPrice = buyOrderResult.fillPrice / buyOrderResult.amount * 0.2;
+        Quantity amountLeft = buyOrderResult.amount - buyOrderResult.fee;
+        Price smallPrice = buyOrderResult.fillPrice / buyOrderResult.amount * tools::FixedPoint("0.2");
 
         // For small order smallPrice * amount can be lower than the exchange min order size and it fails
         if(smallPrice * amountLeft < _exchangeController.getMinOrderSize())
-            smallPrice = (_exchangeController.getMinOrderSize() * 1.1) / amountLeft;
+            smallPrice = (_exchangeController.getMinOrderSize() * tools::FixedPoint(1.1)) / amountLeft;
 
         return _exchangeController.sendOrder(_pairId, ExchangeController::Side::sell, amountLeft, smallPrice);
     }

@@ -14,7 +14,7 @@ namespace Bot
         std::string getPairId() const {return _pairId;};
         Price getLimitBuyPrice() const {return _limitBuyPrice;};
         std::optional<Quantity> getQuantity() const {return _quantity;};
-        ApiKeys getApiKeys() const;
+        ApiKeys getApiKeys(Exchange exchange) const;
         bool getWithConsole() const {return _withConsole;};
         std::string toString() const;
         TimeThresholdConfig getTimeThresholdConfig() const;

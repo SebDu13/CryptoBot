@@ -118,8 +118,8 @@ void GateIoCPP::send_limit_order (
 	const std::string& currency_pair, 
 	const Side side,
 	const TimeInForce timeInForce,
-	double quantity,
-	double price,
+	const Quantity& quantity,
+	const Price& price,
 	Json::Value &json_result ) const
 {
 	//LOG_DEBUG;
@@ -142,14 +142,14 @@ void GateIoCPP::send_limit_order (
 	bodyJson["account"] = "spot";
 	bodyJson["side"] = std::string(magic_enum::enum_name(side));
 	bodyJson["iceberg"] = "0";
-	bodyJson["amount"] = std::to_string(quantity);
-	bodyJson["price"] = tools::to_string_exact(price);
+	bodyJson["amount"] = quantity.toStringExact();
+	bodyJson["price"] = price.toStringExact();
 	bodyJson["time_in_force"] = std::string(magic_enum::enum_name(timeInForce));
 	bodyJson["auto_borrow"] = false;
 
 	std::string body = bodyJson.toStyledString();
 
-	//LOG_DEBUG << "url = " << url << " body = " << body;
+	LOG_DEBUG << "url = " << url << " body = " << body;
 	
 	std::string action("POST");
 	const auto httpHeader = generateSignedHttpHeader(action, prefix, body);

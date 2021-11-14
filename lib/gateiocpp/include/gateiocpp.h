@@ -1,8 +1,9 @@
 #pragma once
 
 #include <string>
-#include "json/json.h"
 #include <curl/curl.h>
+#include "json/json.h"
+#include "FixedPoint.hpp"
 
 class GateIoCPP {
 	public:
@@ -38,8 +39,8 @@ class GateIoCPP {
 			const std::string& currency_pair,
 			const Side side,
 			const TimeInForce timeInForce,
-			double quantity,
-			double price,
+			const Quantity& quantity,
+			const Price& price,
 			Json::Value &json_result ) const;
 		 void get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result) const;
 		 void getOrderBook(const std::string& currencyPair, std::string &result) const;

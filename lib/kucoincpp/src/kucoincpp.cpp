@@ -14,10 +14,22 @@
 #include "sha.hpp"
 #include "chrono.hpp"
 #include "tools.hpp"
+#include "base64.h"
+#include "utf8.h"
+
+#include "cct_codec.hpp"
+#include "ssl_sha.hpp"
 
 #define KUCOIN_HOST "https://api.kucoin.com"
 
 namespace{
+
+void fix_utf8_string(std::string& str)
+{
+    std::string temp;
+    utf8::replace_invalid(str.begin(), str.end(), back_inserter(temp));
+    str = temp;
+}
 
 void convertToJson(const std::string& input, Json::Value& output)
 {
@@ -41,13 +53,14 @@ size_t curl_cb( void *content, size_t size, size_t nmemb, std::string *buffer )
 
 }
 
-KucoinCPP::KucoinCPP(const std::string &api_key, const std::string &secret_key ) 
+KucoinCPP::KucoinCPP(const std::string &api_key, const std::string &secret_key, const std::string &passPhrase )
+: curl(curl_easy_init())
+, api_key(api_key)
+, secret_key(secret_key)
+, passPhrase(passPhrase)
 {
 	LOG_INFO <<  "with api_key " << api_key;
 	curl_global_init(CURL_GLOBAL_DEFAULT);
-	KucoinCPP::curl = curl_easy_init();
-	KucoinCPP::api_key = api_key;
-	KucoinCPP::secret_key = secret_key;
 }
 
 KucoinCPP::~KucoinCPP()
@@ -124,12 +137,20 @@ void KucoinCPP::getTickersGeneric(const std::string url, SpotTickersResult &json
 		LOG_ERROR <<  "Failed to get anything.";
 }
 
+/*{
+        "code" : "400100",
+        "msg" : "Order size below the minimum requirement."
+}
+{
+    "code" : "900001",
+    "msg" : "Symbol [pouette-USDT] Not Exists"
+}*/
 void KucoinCPP::sendLimitOrder ( 
 	const std::string& currency_pair, 
 	const Side side,
 	const TimeInForce timeInForce,
-	double quantity,
-	double price,
+	const Quantity& quantity,
+	const Price& price,
 	Json::Value &json_result ) const
 {
 	//LOG_DEBUG;
@@ -151,8 +172,8 @@ void KucoinCPP::sendLimitOrder (
 	bodyJson["symbol"] = currency_pair;
 	bodyJson["type"] = "limit";
 	bodyJson["stp"] = "CO";
-	bodyJson["price"] = tools::to_string_exact(price);
-	bodyJson["size"] = std::to_string(quantity);
+	bodyJson["price"] = price.toStringExact();
+	bodyJson["size"] = quantity.toStringExact();
 	bodyJson["timeInForce"] = std::string(magic_enum::enum_name(timeInForce));
 
 	std::string body = bodyJson.toStyledString();
@@ -172,6 +193,38 @@ void KucoinCPP::sendLimitOrder (
 		LOG_ERROR << "Failed to get anything.";
 }
 
+void KucoinCPP::getOrder ( 
+	const std::string& orderId,
+	Json::Value &json_result ) const
+{
+	CHRONO_THIS_SCOPE;
+
+	if ( api_key.size() == 0 || secret_key.size() == 0 )
+	{
+		LOG_ERROR << "API Key and Secret Key has not been set.";
+		return ;
+	}
+
+	std::string url(KUCOIN_HOST);
+	std::string prefix("/api/v1/orders/" + orderId);
+	url += prefix;
+	
+	//LOG_DEBUG << url;
+
+	std::string action("GET");
+	std::string body;
+	const auto httpHeader = generateSignedHttpHeader(action, prefix, body);
+
+	std::string result;
+	curl_api_with_header( url, httpHeader, body, action, result ) ;
+	if ( result.size() > 0 ) 
+	{
+		convertToJson(result, json_result); 
+	} 
+	else 
+		LOG_ERROR << "Failed to get anything.";
+}
+
 void KucoinCPP::curl_api( std::string &url, std::string &result_json ) const
 {
 	curl_api_with_header( url , {}, "" , "GET", result_json );	
@@ -179,23 +232,22 @@ void KucoinCPP::curl_api( std::string &url, std::string &result_json ) const
 
 std::vector <std::string> KucoinCPP::generateSignedHttpHeader(const std::string& action, const std::string& prefix, const std::string& body) const
 {
-	std::string bodyHash = tools::sha512(body.c_str());
-	auto timeStamp = tools::get_current_epoch();
+	using namespace cct;
 
+	auto timeStamp = tools::get_current_ms_epoch();
 	std::stringstream sign;
-	sign << action << std::endl;
-	sign << prefix << std::endl;
-	sign << "" << std::endl; /* supposed to be query param */ 
-	sign << bodyHash << std::endl;
-	sign << timeStamp;
+	sign << timeStamp << action << prefix << body;
 
-	std::string signHash = tools::hmac_sha512(secret_key.c_str(), sign.str().c_str());
+	std::string signHash = B64Encode(ssl::ShaBin(ssl::ShaType::kSha256, sign.str(), secret_key));
+	std::string passPhraseHash = B64Encode(ssl::ShaBin(ssl::ShaType::kSha256, passPhrase, secret_key));
 
 	return std::vector <std::string>{
-		"Content-Type: application/json"
-		,"Timestamp: " + std::to_string(timeStamp)
-		,"KEY: " + api_key
-		,"SIGN: " + signHash};
+		 "KC-API-SIGN:" + signHash
+		,"KC-API-TIMESTAMP:" + std::to_string(timeStamp)
+		,"KC-API-KEY:" + api_key
+		,"KC-API-PASSPHRASE:" + passPhraseHash
+		,"KC-API-KEY-VERSION:2"
+		,"Content-Type: application/json"};
 }
 
 void KucoinCPP::curl_api_with_header(const std::string &url
@@ -207,8 +259,8 @@ void KucoinCPP::curl_api_with_header(const std::string &url
 	CHRONO_THIS_SCOPE;
 	CURLcode res;
 
-	if( curl ) {
-
+	if( curl ) 
+	{
 		curl_easy_setopt(curl, CURLOPT_URL, url.c_str() );
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_cb);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &str_result );
@@ -219,7 +271,8 @@ void KucoinCPP::curl_api_with_header(const std::string &url
 		if ( extra_http_header.size() > 0 ) {
 			
 			struct curl_slist *chunk = NULL;
-			for ( int i = 0 ; i < extra_http_header.size() ;i++ ) {
+			for ( int i = 0 ; i < extra_http_header.size() ;i++ ) 
+			{
 				chunk = curl_slist_append(chunk, extra_http_header[i].c_str() );
 			}
 			curl_easy_setopt(KucoinCPP::curl, CURLOPT_HTTPHEADER, chunk);
@@ -237,8 +290,10 @@ void KucoinCPP::curl_api_with_header(const std::string &url
 		/* Check for errors */ 
 		if ( res != CURLE_OK ) {
 			LOG_ERROR <<  "failed: " << curl_easy_strerror(res);
-		} 	
+		}
 	}
+	else 
+		LOG_ERROR <<  "curl is null";
 }
 
 

@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/CryptoBot2",
-            "args": [],
+            "args": ["--id", "XRP-USDT", "--limitPrice", "2.1", "--quantity", "1.01", "--withConsole"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],

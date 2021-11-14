@@ -1,18 +1,16 @@
 #pragma once
 
 #include <string>
-#include <unordered_set>
-#include "gateiocpp.h"
+#include "kucoincpp.hpp"
 #include "exchangeController/AbstractExchangeController.hpp"
 
 namespace ExchangeController{
 
-class GateioController: public AbstractExchangeController
+class KucoinController: public AbstractExchangeController
 {
     public:
-    GateioController(const Bot::ApiKeys& apiKeys);
-    virtual ~GateioController();
-    CurrencyPair getNewCurrencyPairSync(const std::string& quote) const;
+    KucoinController(const Bot::ApiKeys& apiKeys);
+    virtual ~KucoinController();
     TickerResult getSpotTicker(const std::string& currencyPair) const override;
     std::string getOrderBook(const std::string& currencyPair) const override;
     OrderResult sendOrder(const std::string& currencyPair, const Side side, const Quantity& quantity, const Price& price) const override;
@@ -20,11 +18,6 @@ class GateioController: public AbstractExchangeController
     Quantity getMinOrderSize() const override;
 
     private:
-    GateIoCPP _gateIoAPI;
-    std::unordered_set<std::string> allCurrencyPairsCache;
-    std::size_t rawCurrencyPairsResultSize;
-
-    std::optional<CurrencyPair> findNewPairFrom(const GateIoCPP::CurrencyPairsResult& result, const std::string& quote) const;
+    KucoinCPP _kucoinAPI;
 };
-
-} /* end ExchangeController namespace */ 
+}

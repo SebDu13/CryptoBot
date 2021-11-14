@@ -119,10 +119,10 @@ ExchangeController::OrderStatus fillOrderStatus(const Json::Value& result)
 
 namespace ExchangeController{
 
-GateioController::GateioController(const Bot::ApiKeys& apiKeys):gateIoAPI(apiKeys.pub, apiKeys.secret)
+GateioController::GateioController(const Bot::ApiKeys& apiKeys):_gateIoAPI(apiKeys.pub, apiKeys.secret)
 {
     /*GateIoCPP::CurrencyPairsResult result;
-    gateIoAPI.get_currency_pairs(result);
+    _gateIoAPI.get_currency_pairs(result);
     //result = "{\"id\":\"STRONG_USDT\",\"base\":\"STRONG\",\"quote\":\"USDT\",\"fee\":\"0.2\",\"min_quote_amount\":\"1\",\"amount_precision\":3,\"precision\":2,\"trade_status\":\"tradable\",\"sell_start\":0,\"buy_start\":0},{\"id\":\"POUETTE\",\"base\":\"STRONG\",\"quote\":\"USDT\",\"fee\":\"0.2\",\"min_quote_amount\":\"1\",\"amount_precision\":3,\"precision\":2,\"trade_status\":\"tradable\",\"sell_start\":0,\"buy_start\":0}";
     if(!sanityCheck(result))
         throw ExchangeControllerException("Sanity check failed in GateioController()");
@@ -160,7 +160,7 @@ CurrencyPair GateioController::getNewCurrencyPairSync(const std::string& quote) 
     {
         CHRONO_THIS_SCOPE;
         GateIoCPP::CurrencyPairsResult result;
-        gateIoAPI.get_currency_pairs(result);
+        _gateIoAPI.get_currency_pairs(result);
 
         /*++i;
         if(i == 4)
@@ -191,7 +191,7 @@ TickerResult GateioController::getSpotTicker(const std::string& currencyPair) co
 {
     //CHRONO_THIS_SCOPE;
     GateIoCPP::SpotTickersResult result;
-    gateIoAPI.get_spot_tickers(currencyPair, result);
+    _gateIoAPI.get_spot_tickers(currencyPair, result);
 
     return {boost::lexical_cast<double>(result[0]["last"].asString())
         , boost::lexical_cast<double>(result[0]["high_24h"].asString())
@@ -205,46 +205,48 @@ TickerResult GateioController::getSpotTicker(const std::string& currencyPair) co
 std::string GateioController::getOrderBook(const std::string& currencyPair) const
 {
     std::string result;
-    gateIoAPI.getOrderBook(currencyPair,result);
+    _gateIoAPI.getOrderBook(currencyPair,result);
     return result;
 }
 
-OrderResult GateioController::sendOrder(const std::string& currencyPair, const Side side, double quantity, double price) const
+OrderResult GateioController::sendOrder(const std::string& currencyPair, const Side side, const Quantity& quantity, const Price& price) const
 {
     Json::Value result;
-    gateIoAPI.send_limit_order(currencyPair, convertFrom(side), GateIoCPP::TimeInForce::ioc, quantity, price, result);
+    _gateIoAPI.send_limit_order(currencyPair, convertFrom(side), GateIoCPP::TimeInForce::ioc, quantity, price, result);
     const auto& status = fillOrderStatus(result);
     
     LOG_DEBUG << result;
         
     if( status == OrderStatus::Closed || status == OrderStatus::Cancelled)
         return {status
-        ,boost::lexical_cast<double>(result["fill_price"].asString())
-        ,boost::lexical_cast<double>(result["filled_total"].asString())
-        ,boost::lexical_cast<double>(result["amount"].asString())
-        ,boost::lexical_cast<double>(result["fee"].asString()) };
+        , Quantity(result["fill_price"].asString())
+        , Quantity(result["filled_total"].asString())
+        , Quantity(result["amount"].asString())
+        , Quantity(result["fee"].asString()) };
     else
-        return {status, 0, 0, 0, 0};
+        return {status, Quantity(), Quantity(), Quantity(), Quantity()};
 }
 
-Bot::Quantity GateioController::computeMaxQuantity(double price) const
+Quantity GateioController::computeMaxQuantity(const Price& price) const
 {
     Json::Value result;
-    gateIoAPI.getAccountBalances(result);
+    _gateIoAPI.getAccountBalances(result);
 
     if(result["details"]["spot"]["currency"] == "USDT")
     {
-        double quantity = std::stod(result["details"]["spot"]["amount"].asString());
-        LOG_INFO << "There is " << quantity << " USDT on spot account";
-        return Bot::Quantity{quantity};
+        Quantity quantity(result["details"]["spot"]["amount"].asString());
+        LOG_INFO << "There is " << quantity.toString() << " USDT on spot account";
+        const tools::FixedPoint percent("0.97");
+
+        return Quantity{floor((double)((quantity * percent)/price))};
     }
 
-    return Bot::Quantity{};
+    return Quantity{};
 }
 
-double GateioController::getMinOrderSize() const
+Quantity GateioController::getMinOrderSize() const
 {
-    return 1;
+    return Quantity{"1"};
 }
 
 } /* end of namespace ExchangeController*/

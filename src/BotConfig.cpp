@@ -13,8 +13,8 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
     desc.add_options()
     ("help", "Make sure to have at least limitPrice*quantity available on the wallet")
     ("id", po::value<std::string>(), "Set new currency identifier. Ex: ETH_USDT")
-    ("limitPrice", po::value<double>(), "Set limit price. Put a large price to have more chance to be executed")
-    ("quantity", po::value<double>(), "Set quantity. If not set, it will use the total amount available on the wallet")
+    ("limitPrice", po::value<std::string>(), "Set limit price. Put a large price to have more chance to be executed")
+    ("quantity", po::value<std::string>(), "Set quantity. If not set, it will use the total amount available on the wallet")
     ("withConsole", "Send logs on console")
     ("greedy", "Duration used to sell if the the price doesn't move and price thresholds are more permissive.");
 
@@ -37,7 +37,7 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
     }
 
     if (vm.count("limitPrice")) 
-        _limitBuyPrice = Price(vm["limitPrice"].as<double>());
+        _limitBuyPrice = Price(vm["limitPrice"].as<std::string>());
     else 
     {
         LOG_ERROR << "limitPrice was not set. --help for more details";
@@ -45,7 +45,7 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
     }
 
     if (vm.count("quantity")) 
-        _quantity = Quantity(vm["quantity"].as<double>());
+        _quantity = Quantity(vm["quantity"].as<std::string>());
 
     if (vm.count("withConsole")) 
         _withConsole = true;
@@ -58,21 +58,37 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
     return Status::Success;
 }
 
-ApiKeys BotConfig::getApiKeys() const
+ApiKeys BotConfig::getApiKeys(Exchange exchange) const
 {
-    ApiKeys apiKeys;
-    const char* apiKeyEnv = "GATEIO_K";
-    const char* secretKeyEnv = "GATEIO_S";
+    std::string apiKeyEnv, secretKeyEnv, passPhrase;
 
-    if(auto key = std::getenv(apiKeyEnv))
+    switch(exchange)
+    {
+        case Exchange::Gateio:
+            apiKeyEnv = "GATEIO_K";
+            secretKeyEnv = "GATEIO_S";
+        break;
+
+        case Exchange::Kucoin:
+            apiKeyEnv = "KUCOIN_K";
+            secretKeyEnv = "KUCOIN_S";
+            passPhrase = "KUCOIN_P";
+        break;
+    }
+
+    ApiKeys apiKeys;
+    if(auto key = std::getenv(apiKeyEnv.c_str()))
         apiKeys.pub = std::string(key);
     else
         LOG_WARNING << apiKeyEnv << " not set or null";
 
-    if(auto key = std::getenv(secretKeyEnv))
+    if(auto key = std::getenv(secretKeyEnv.c_str()))
         apiKeys.secret = std::string(key);
     else
         LOG_WARNING << secretKeyEnv << " not set or null";
+
+    if(auto key = std::getenv(passPhrase.c_str()))
+        apiKeys.passphrase = std::string(key);
 
     return apiKeys;
 }
@@ -83,7 +99,7 @@ std::string BotConfig::toString() const
     stream << "*** BotConfig: ***" << std::endl;
     stream << "pairId=" << _pairId << std::endl;
     stream << "limitBuyPrice=" << _limitBuyPrice.value << std::endl;
-    if(_quantity) stream << "quantity=" << *_quantity << std::endl;
+    if(_quantity) stream << "quantity=" << _quantity->toString() << std::endl;
     stream << "withConsole=" << _withConsole << std::endl;
     stream << "greedy=" << _greedyMode << std::endl;
 
