@@ -149,7 +149,7 @@ void GateIoCPP::send_limit_order (
 
 	std::string body = bodyJson.toStyledString();
 
-	LOG_DEBUG << "url = " << url << " body = " << body;
+	//LOG_DEBUG << "url = " << url << " body = " << body;
 	
 	std::string action("POST");
 	const auto httpHeader = generateSignedHttpHeader(action, prefix, body);

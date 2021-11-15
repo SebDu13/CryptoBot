@@ -38,10 +38,10 @@ int main(int argc, char **argv)
 	LOG_INFO << botConfig.toString();
 
 	// *** KUCOIN ***
-	Json::Value result24hr;
+	/*Json::Value result24hr;
 	Json::Value resultTicker;
 	Json::Value resultOrder;
-	auto apiKeys = botConfig.getApiKeys(Bot::Exchange::Kucoin);
+	auto apiKeys = botConfig.getApiKeys(Bot::Exchange::Kucoin);*/
 
 	/*using boost::multiprecision::cpp_dec_float_50;
 	cpp_dec_float_50 un = cpp_dec_float_50("0.000000000001");
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 		, botConfig);
 
 	listingBot.run();
-	//newListedCurrencyBot.watch();
+	//listingBot.watch();
 
 	return 0;	
 }

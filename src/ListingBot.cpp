@@ -119,7 +119,10 @@ void ListingBot::shouldSellSync(const ExchangeController::OrderResult& buyOrderR
             previousTickerResult = tickerResult;
         }
 
-        if(tickerResult.high24h != 0 && tickerResult.last < (tickerResult.high24h * lossThreshold))
+        if(tickerResult.high24h == 0 || tickerResult.last == 0)
+            continue;
+
+        if(tickerResult.last < (tickerResult.high24h * lossThreshold))
             return;
 
         if(!priceWatcher.isMoving(tickerResult.last, profit))

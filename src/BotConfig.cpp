@@ -167,10 +167,10 @@ TimeThresholdConfig BotConfig::getTimeThresholdConfig() const
     if(_greedyMode)
     {
         lowBound.profit = 1.2;
-        lowBound.timeSec=8;
+        lowBound.timeSec=7;
         highBound.profit = 2;
         highBound.timeSec=3;
-        thresholdPercent=0.15;
+        thresholdPercent=0.1;
     }
     else
     {
@@ -178,7 +178,7 @@ TimeThresholdConfig BotConfig::getTimeThresholdConfig() const
         lowBound.timeSec=5;
         highBound.profit = 1.8;
         highBound.timeSec=3;
-        thresholdPercent=0.1;
+        thresholdPercent=0.15;
     }
     return {.priceThresholdPercent=thresholdPercent, .lowBound = lowBound, .highBound = highBound};
 }
@@ -195,7 +195,7 @@ PriceThresholdConfig BotConfig::getPriceThresholdConfig() const
     }
     else
     {
-        lowBound.profit = 1.2;
+        lowBound.profit = 1.05;
         lowBound.lossThreshold=0.8;
         highBound.profit = 1.8;
         highBound.lossThreshold=0.9;

@@ -17,6 +17,7 @@ bool PriceWatcher::isMoving(double price, double profit)
 {
     if(!_previousPriceIsInit)
     {
+        LOG_DEBUG << "_previousPriceIsInit=" << _previousPriceIsInit << " . price=" << price << " _previousPrice=" << _previousPrice;
         _previousPrice = price;
         _previousPriceIsInit = true;
         return true;
@@ -26,7 +27,8 @@ bool PriceWatcher::isMoving(double price, double profit)
     if(movePercent > _thresholdPercent)
     {
         _startTime = std::chrono::high_resolution_clock::now();
-        LOG_DEBUG << "movePercent=" << movePercent << " reset timer";
+        LOG_DEBUG << "movePercent=" << movePercent << " reset timer. price=" << price << " _previousPrice=" << _previousPrice;
+        _previousPrice = price;
     }
 
     double timeThreshold = _timeThresholdExtrapoler.extrapolate(profit);
