@@ -37,7 +37,7 @@ class ListingBot
     PriceThresholdConfig _priceThresholdConfig;
     TimeThresholdConfig _timeThreasholdConfig;
     std::thread _thread;
-    std::atomic<bool>* _stopFlag;
+    std::atomic<bool>* _stopFlag = nullptr;
 
     void shouldSellSync(const ExchangeController::OrderResult& buyOrderResult) const;
     ExchangeController::OrderResult sellAll(const ExchangeController::OrderResult& buyOrderResult);
