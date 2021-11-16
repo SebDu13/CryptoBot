@@ -87,12 +87,12 @@ bool sanityCheck(const GateIoCPP::CurrencyPairsResult& result)
 ExchangeController::OrderStatus fillOrderStatus(const Json::Value& result)
 {
     // error Json contain message field
-    if(const auto message = result.get("message", Json::Value()); !message.empty())
+    if(const auto& message = result.get("message", Json::Value()); !message.empty())
     {
         //"label" : "INVALID_CURRENCY",
         //"message" : "PIZA_USDT trade is disabled until 2021-11-05T18:00+08:00[Asia/Shanghai]"
         if(message.toStyledString().find("trade is disabled until", 0) != std::string::npos)
-            return ExchangeController::OrderStatus::InvalidCurrency;
+            return ExchangeController::OrderStatus::CurrencyNotAvailable;
         //"message" : "Invalid currency CURRENCY_NAME"
         if(message.toStyledString().find("Invalid currency", 0) != std::string::npos)
             return ExchangeController::OrderStatus::InvalidCurrency;
@@ -219,10 +219,10 @@ OrderResult GateioController::sendOrder(const std::string& currencyPair, const S
         
     if( status == OrderStatus::Closed || status == OrderStatus::Cancelled)
         return {status
-        , Quantity(result["fill_price"].asString())
-        , Quantity(result["filled_total"].asString())
-        , Quantity(result["amount"].asString())
-        , Quantity(result["fee"].asString()) };
+        , std::move(Quantity(result["fill_price"].asString()))
+        , std::move(Quantity(result["filled_total"].asString()))
+        , std::move(Quantity(result["amount"].asString()))
+        , std::move(Quantity(result["fee"].asString())) };
     else
         return {status, Quantity(), Quantity(), Quantity(), Quantity()};
 }

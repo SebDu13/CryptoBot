@@ -23,6 +23,12 @@ ExchangeController::OrderStatus fillOrderStatus(const Json::Value& result)
     // error Json contain message field
     if(const auto message = result.get("code", Json::Value()); !message.empty())
     {
+        if(message.toStyledString().find("400600", 0) != std::string::npos)
+            return ExchangeController::OrderStatus::CurrencyNotAvailable;
+        if(message.toStyledString().find("400200", 0) != std::string::npos) // Forbidden to place an order. Sometime there is this message. Should i keep that ? 
+            return ExchangeController::OrderStatus::CurrencyNotAvailable;
+        if(message.toStyledString().find("200002", 0) != std::string::npos) // "Too many requests in a short period of time, please retry later"
+            return ExchangeController::OrderStatus::CurrencyNotAvailable;
         if(message.toStyledString().find("200000", 0) != std::string::npos)
             return ExchangeController::OrderStatus::Closed;
         if(message.toStyledString().find("900001", 0) != std::string::npos)
@@ -50,7 +56,7 @@ KucoinController::~KucoinController()
 
 TickerResult KucoinController::getSpotTicker(const std::string& currencyPair) const
 {
-    CHRONO_THIS_SCOPE;
+    //CHRONO_THIS_SCOPE;
     static size_t failureCount = 0;
     static double high_24h = 0; // artificial because not suported by the api but required
     Json::Value result;
@@ -98,18 +104,34 @@ OrderResult KucoinController::sendOrder(const std::string& currencyPair, const S
     if(status != OrderStatus::Closed)
         return {status, Quantity(), Quantity(), Quantity(), Quantity()};
 
-    _kucoinAPI.getOrder(result["data"]["orderId"].asString(), resultOrderInfo);
-    LOG_DEBUG << resultOrderInfo;
+    std::string code, cancelExist, dealFunds, dealSize, fee;
+    size_t tryNumber = 0;
+    do
+    {
+        sleep(1);
+        _kucoinAPI.getOrder(result["data"]["orderId"].asString(), resultOrderInfo);
+        const auto& data = resultOrderInfo["data"];
+        LOG_DEBUG << resultOrderInfo << std::endl << "tryNumber=" << tryNumber;
+        
+        // vérifier que "code == 200000" ??
+        code = resultOrderInfo["code"].asString();
+        cancelExist = data["cancelExist"].asString();
+        dealFunds = data["dealFunds"].asString();
+        dealSize = data["dealSize"].asString();
+        fee = data["fee"].asString();
+        ++tryNumber;
 
-    if(resultOrderInfo["code"].asString() != "200000")
-        throw ExchangeControllerException("KucoinController::sendOrder cannot get order info *** POSITION IS OPEN ***");
+        /*if(tryNumber == 6)
+            throw ExchangeControllerException("KucoinController::sendOrder cannot get order info *** POSITION IS OPEN ***");*/
 
-    const auto& data = resultOrderInfo["data"];
-    return { (data["cancelExist"].asString() == "true" ? OrderStatus::Cancelled: status)
-    , Quantity(data["dealFunds"].asString())
-    , Quantity(data["dealFunds"].asString())
-    , Quantity(data["dealSize"].asString())
-    , Quantity(data["fee"].asString()) };
+    } while (resultOrderInfo["code"].asString() == "200000"
+        && cancelExist == "false" && (dealFunds == "0" || dealSize == "0"));
+
+    return { (cancelExist == "true" ? OrderStatus::Cancelled: status)
+    , Quantity(std::move(dealFunds))
+    , Quantity(std::move(dealFunds))
+    , Quantity(std::move(dealSize))
+    , Quantity(std::move(fee)) };
 }
 
     Quantity KucoinController::computeMaxQuantity(const Price& price) const

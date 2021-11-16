@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <memory>
+#include <thread>
+#include <atomic>
 #include "exchangeController/AbstractExchangeController.hpp"
 #include "BotType.hpp"
 #include "BotConfig.hpp"
@@ -18,11 +20,12 @@ namespace Bot
 class ListingBot
 {
     public:
-    ListingBot(std::unique_ptr<ExchangeController::AbstractExchangeController> exchangeController
-        , const BotConfig& botconfig);
+    ListingBot(const BotConfig& botconfig);
         
     virtual ~ListingBot();
     void run();
+    void runAsync(std::atomic<bool>* stopFlag);
+    void justBuy();
     void watch() const;
     void runWithoutMonitoring(const std::string& pairId);
 
@@ -33,10 +36,14 @@ class ListingBot
     Quantity _quantity;
     PriceThresholdConfig _priceThresholdConfig;
     TimeThresholdConfig _timeThreasholdConfig;
+    std::thread _thread;
+    std::atomic<bool>* _stopFlag;
 
     void shouldSellSync(const ExchangeController::OrderResult& buyOrderResult) const;
     ExchangeController::OrderResult sellAll(const ExchangeController::OrderResult& buyOrderResult);
     std::optional<ExchangeController::OrderResult> buySync();
+    bool shouldStop();
+    void notifyStop();
 };
 
 } /* end namespace Bot */ 

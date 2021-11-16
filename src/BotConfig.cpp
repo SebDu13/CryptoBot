@@ -19,9 +19,7 @@ void convertCurrencyPair(std::string& pairId, Bot::Exchange exchange)
     switch (exchange)
     {
     case Bot::Exchange::Kucoin:
-        LOG_DEBUG << pairId;
         std::replace( pairId.begin(), pairId.end(), '_', '-');
-        LOG_DEBUG << pairId;
         break;
 
     case Bot::Exchange::Gateio:
@@ -166,19 +164,19 @@ TimeThresholdConfig BotConfig::getTimeThresholdConfig() const
     double thresholdPercent;
     if(_greedyMode)
     {
-        lowBound.profit = 1.2;
-        lowBound.timeSec=7;
-        highBound.profit = 2;
+        lowBound.profit = 1.05;
+        lowBound.timeSec=8;
+        highBound.profit = 1.6;
         highBound.timeSec=3;
-        thresholdPercent=0.1;
+        thresholdPercent=0.05;
     }
     else
     {
-        lowBound.profit = 1.2;
-        lowBound.timeSec=5;
-        highBound.profit = 1.8;
+        lowBound.profit = 1.05;
+        lowBound.timeSec=8;
+        highBound.profit = 1.3;
         highBound.timeSec=3;
-        thresholdPercent=0.15;
+        thresholdPercent=0.1;
     }
     return {.priceThresholdPercent=thresholdPercent, .lowBound = lowBound, .highBound = highBound};
 }

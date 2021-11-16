@@ -149,7 +149,7 @@ void KucoinCPP::sendLimitOrder (
 	Json::Value &json_result ) const
 {
 	//LOG_DEBUG;
-	CHRONO_THIS_SCOPE;
+	//CHRONO_THIS_SCOPE;
 
 	if ( api_key.size() == 0 || secret_key.size() == 0 )
 	{
@@ -173,7 +173,7 @@ void KucoinCPP::sendLimitOrder (
 
 	std::string body = bodyJson.toStyledString();
 
-	//LOG_DEBUG << "url = " << url << " body = " << body;
+	LOG_DEBUG << "url = " << url << " body = " << body;
 	
 	std::string action("POST");
 	const auto httpHeader = generateSignedHttpHeader(action, prefix, body);

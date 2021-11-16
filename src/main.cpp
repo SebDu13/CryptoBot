@@ -17,6 +17,7 @@
 #include "ListingBot.hpp"
 #include "BotType.hpp"
 #include "BotConfig.hpp"
+#include "BotManager.hpp"
 #include "tools.hpp"
 
 #include <boost/multiprecision/cpp_dec_float.hpp>
@@ -79,12 +80,86 @@ int main(int argc, char **argv)
 
 	// ***
 
-	Bot::ListingBot listingBot(
+	/*Bot::ListingBot listingBot(
 		ExchangeController::ExchangeControllerFactory::create(botConfig)
 		, botConfig);
 
-	listingBot.run();
+	listingBot.run();*/
 	//listingBot.watch();
+
+    /*std::tm t = {};
+    std::istringstream ss("13:00");
+
+    if (ss >> std::get_time(&t, "%H:%M"))
+    {
+        std::cout << std::put_time(&t, "%c") << "\n"
+                  << std::mktime(&t) << "\n";
+    }
+    else
+    {
+        std::cout << "Parse failed\n";
+    }*/
+
+
+
+	std::time_t time = std::time(0);   // get today date
+    std::tm* now = std::gmtime(&time); // convert to utc struct time
+	std::tm later = *now;
+	later.tm_sec =0;
+
+	LOG_DEBUG << later.tm_zone;
+	std::istringstream ss("16:10");
+	ss >> std::get_time(&later, "%H:%M"); // add hour 
+	LOG_DEBUG << later.tm_zone;
+
+	std::cout << (later.tm_year) << '-' 
+	<< (later.tm_mon) << '-'
+	<<  later.tm_mday << '-'
+	<<  later.tm_hour << ':'
+	<<  later.tm_min
+	<< "\n";
+
+
+	LOG_DEBUG << timegm(&later);
+	auto time_t_later = std::chrono::system_clock::from_time_t(timegm(&later));
+	auto time_t_later_diff = time_t_later - std::chrono::high_resolution_clock::now();
+	//LOG_DEBUG << time_t_later_diff.count();
+	LOG_DEBUG << std::chrono::duration<double, std::micro>(time_t_later_diff).count() << "ms";
+
+
+	//LOG_DEBUG << std::chrono::high_resolution_clock::now();
+
+	//auto laterCast = std::chrono::duration_cast<std::chrono::microseconds>(timegm(&later));
+	//later - nowFromClock;
+
+	long long count;
+	//if(time_t_later > std::chrono::high_resolution_clock::now())
+	//{
+		do
+		{
+			count = std::chrono::duration<double, std::micro>(time_t_later - std::chrono::high_resolution_clock::now() /*-std::chrono::milliseconds(35)*/).count();
+			LOG_DEBUG << count;
+		}while(  count > 0);
+	//}
+
+	//Bot::ListingBot listingBot1(botConfig);
+
+	//Bot::ListingBot listingBot2(botConfig);
+
+	/*std::thread thread1([&listingBot1](){
+		listingBot1.justBuy();
+	});
+
+	std::thread thread2([&listingBot2](){
+		listingBot2.justBuy();
+	});
+
+	if(thread1.joinable())
+		thread1.join();
+	if(thread2.joinable())
+		thread2.join();*/
+	Bot::BotManager botmanager(botConfig);
+	botmanager.startOnTime();
 
 	return 0;	
 }

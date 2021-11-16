@@ -6,13 +6,13 @@
 #include "magic_enum.hpp"
 #include "tools.hpp"
 #include "PriceWatcher.hpp"
+#include "exchangeController/ExchangeControllerFactory.hpp"
 
 namespace Bot
 {
 
-ListingBot::ListingBot(std::unique_ptr<ExchangeController::AbstractExchangeController> exchangeController
-    , const BotConfig& botConfig)
-: _exchangeController(std::move(exchangeController))
+ListingBot::ListingBot(const BotConfig& botConfig)
+: _exchangeController(ExchangeController::ExchangeControllerFactory::create(botConfig))
 , _pairId(botConfig.getPairId())
 , _limitBuyPrice(botConfig.getLimitBuyPrice())
 , _priceThresholdConfig(botConfig.getPriceThresholdConfig())
@@ -34,7 +34,27 @@ ListingBot::ListingBot(std::unique_ptr<ExchangeController::AbstractExchangeContr
 }
 
 ListingBot::~ListingBot()
-{}
+{
+    if(_thread.joinable())
+        _thread.join();
+    LOG_DEBUG;
+}
+
+bool ListingBot::shouldStop()
+{
+    if(_stopFlag && *_stopFlag)
+    {
+        LOG_INFO << "_stopflag is set, stopping...";
+        return true;
+    }
+    return false;
+}
+
+void ListingBot::notifyStop()
+{
+    if(_stopFlag)
+        *_stopFlag = true;
+}
 
 void ListingBot::run()
 {
@@ -48,6 +68,8 @@ void ListingBot::run()
         LOG_ERROR << "Cannot buy " << _pairId << " because buyOrderResult.status=" << magic_enum::enum_name(buyOrderResult->status);
         return;
     }
+
+    notifyStop();
 
     // Wait
     shouldSellSync(*buyOrderResult);
@@ -72,27 +94,44 @@ void ListingBot::run()
 
 }
 
+void ListingBot::runAsync(std::atomic<bool>* stopFlag)
+{
+    _stopFlag = stopFlag;
+    _thread = std::thread([this](){
+        LOG_INFO << "Running asynchronously...";
+        this->run();
+    });
+}
+
 std::optional<ExchangeController::OrderResult> ListingBot::buySync()
 {
     ExchangeController::OrderResult buyOrderResult;
     do
     {
         CHRONO_THIS_SCOPE;
+        
+        if(shouldStop())
+            return std::nullopt;
+
         if(tools::kbhit())
         {
             LOG_INFO << "key pressed, stopping...";
-            return std::nullopt;
+
+            notifyStop();
+            //return std::nullopt;
         }
 
         buyOrderResult = _exchangeController->sendOrder(_pairId, ExchangeController::Side::buy , _quantity, _limitBuyPrice);
 
-        if(buyOrderResult.status != ExchangeController::OrderStatus::InvalidCurrency)
-            LOG_DEBUG << magic_enum::enum_name(buyOrderResult.status);
-
-
-    } while (buyOrderResult.status == ExchangeController::OrderStatus::InvalidCurrency);
+    } while (buyOrderResult.status == ExchangeController::OrderStatus::CurrencyNotAvailable);
 
     return buyOrderResult;
+}
+
+void  ListingBot::justBuy()
+{
+    LOG_INFO;
+    _exchangeController->sendOrder(_pairId, ExchangeController::Side::buy , _quantity, _limitBuyPrice);
 }
 
 
@@ -144,7 +183,8 @@ void ListingBot::watch() const
     while(!tools::kbhit())
     {
         const ExchangeController::TickerResult tickerResult = _exchangeController->getSpotTicker(_pairId);
-        if(previousTickerResult != tickerResult)
+        LOG_INFO << "tickerResult " << tickerResult.toString();
+        /*if(previousTickerResult != tickerResult)
         {
             LOG_INFO << "tickerResult " << tickerResult.toString();
             //LOG_INFO << "jsonOrderBook " << _exchangeController->getOrderBook(_pairId);
@@ -159,7 +199,7 @@ void ListingBot::watch() const
             return;
         }
 
-        profit += 0.1;
+        profit += 0.1;*/
     }
 }
 

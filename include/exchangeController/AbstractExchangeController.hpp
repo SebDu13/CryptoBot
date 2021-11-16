@@ -26,6 +26,7 @@ namespace ExchangeController
         NotEnoughBalance,
         OrderSizeTooLarge,
         InvalidCurrency,
+        CurrencyNotAvailable,
         Unknown
     };
 
