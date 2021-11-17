@@ -110,8 +110,8 @@ OrderResult KucoinController::sendOrder(const std::string& currencyPair, const S
     {
         sleep(1);
         _kucoinAPI.getOrder(result["data"]["orderId"].asString(), resultOrderInfo);
-        const auto& data = resultOrderInfo["data"];
         LOG_DEBUG << resultOrderInfo << std::endl << "tryNumber=" << tryNumber;
+        const auto& data = resultOrderInfo["data"];
         
         // vérifier que "code == 200000" ??
         code = resultOrderInfo["code"].asString();
@@ -124,11 +124,10 @@ OrderResult KucoinController::sendOrder(const std::string& currencyPair, const S
         /*if(tryNumber == 6)
             throw ExchangeControllerException("KucoinController::sendOrder cannot get order info *** POSITION IS OPEN ***");*/
 
-    } while (resultOrderInfo["code"].asString() == "200000"
-        && cancelExist == "false" && (dealFunds == "0" || dealSize == "0"));
+    } while (code == "200000" && cancelExist == "false" && (dealFunds == "0" || dealSize == "0"));
 
     return { (cancelExist == "true" ? OrderStatus::Cancelled: status)
-    , Quantity(std::move(dealFunds))
+    , Quantity(dealFunds)
     , Quantity(std::move(dealFunds))
     , Quantity(std::move(dealSize))
     , Quantity(std::move(fee)) };

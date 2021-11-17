@@ -13,11 +13,13 @@ std::unique_ptr<AbstractExchangeController> ExchangeControllerFactory::create(co
     switch(exchange)
     {
         case Bot::Exchange::Gateio:
-            return std::make_unique<ExchangeController::GateioController> (config.getApiKeys(exchange));
+            return std::make_unique<ExchangeController::GateioController> (config.getApiKeys());
         case Bot::Exchange::Kucoin:
-            return std::make_unique<ExchangeController::KucoinController> (config.getApiKeys(exchange));
+            return std::make_unique<ExchangeController::KucoinController> (config.getApiKeys());
+        default:
+            LOG_ERROR << magic_enum::enum_name(exchange) << " not supported";
+        break;
     }
-    LOG_ERROR << magic_enum::enum_name(exchange) << " not supported";
     return nullptr;
 }
 

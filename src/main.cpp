@@ -38,6 +38,9 @@ int main(int argc, char **argv)
 
 	LOG_INFO << botConfig.toString();
 
+	Bot::BotManager botmanager(botConfig);
+	botmanager.startOnTime();
+
 	// *** KUCOIN ***
 	/*Json::Value result24hr;
 	Json::Value resultTicker;
@@ -86,19 +89,6 @@ int main(int argc, char **argv)
 
 	listingBot.run();*/
 	//listingBot.watch();
-
-	if(botConfig.getExchange() == Bot::Exchange::Gateio)
-	{
-		Bot::BotManager botmanager(botConfig);
-		botmanager.startOnTime();
-	}
-	else if(botConfig.getExchange() == Bot::Exchange::Kucoin)
-	{
-		Bot::ListingBot listingBot(botConfig);
-
-		listingBot.run();
-		//listingBot.watch();
-	}
 
 	return 0;	
 }

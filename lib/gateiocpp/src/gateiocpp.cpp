@@ -150,10 +150,10 @@ void GateIoCPP::send_limit_order (
 	std::string body = bodyJson.toStyledString();
 
 	//LOG_DEBUG << "url = " << url << " body = " << body;
-	
 	std::string action("POST");
 	const auto httpHeader = generateSignedHttpHeader(action, prefix, body);
 
+	LOG_DEBUG;
 	std::string result;
 	curl_api_with_header( url, httpHeader, body, action, result );
 	if ( result.size() > 0 ) 

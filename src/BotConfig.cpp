@@ -2,6 +2,7 @@
 #include <boost/program_options.hpp>
 #include "logger.hpp"
 #include "magic_enum.hpp"
+#include <regex>
 
 namespace{
 
@@ -28,6 +29,11 @@ void convertCurrencyPair(std::string& pairId, Bot::Exchange exchange)
     }
 }
 
+bool checkStartTime(const std::string& startTime)
+{
+     return std::regex_match(startTime, std::regex("^([0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"));
+}
+
 }
 
 namespace Bot
@@ -46,7 +52,8 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
     ("withConsole", "Send logs on console")
     ("greedy", "Duration used to sell if the the price doesn't move and price thresholds are more permissive.")
     ("exchange", po::value<std::string>(), printExchanges().c_str())
-    ("maxAmount", po::value<std::string>(), "Max amount to trade (in USDT)");
+    ("maxAmount", po::value<std::string>(), "Max amount to trade (in USDT)")
+    ("startTime", po::value<std::string>(), "Start token listing time. hh:mm UTC");
 
     po::variables_map vm;        
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -104,16 +111,31 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
     if (vm.count("maxAmount")) 
         _maxAmount = Quantity(vm["maxAmount"].as<std::string>());
 
+    if (vm.count("startTime")) 
+    {
+        _startTime = vm["startTime"].as<std::string>();
+        if(!checkStartTime(_startTime))
+        {
+            LOG_ERROR << "Wrong startTime format. Should be hh:mm";
+            return Status::Failure;
+        }
+    }
+    else
+    {
+        LOG_ERROR << "startTime was not set. --help for more details";
+        return Status::Failure;
+    }
+
     convertCurrencyPair(_pairId, _exchange);
 
     return Status::Success;
 }
 
-ApiKeys BotConfig::getApiKeys(Exchange exchange) const
+ApiKeys BotConfig::getApiKeys() const
 {
     std::string apiKeyEnv, secretKeyEnv, passPhrase;
 
-    switch(exchange)
+    switch(_exchange)
     {
         case Exchange::Gateio:
             apiKeyEnv = "GATEIO_K";
@@ -148,12 +170,14 @@ std::string BotConfig::toString() const
 {
     std::stringstream stream;
     stream << "*** BotConfig: ***" << std::endl;
+    stream << "exchange=" << magic_enum::enum_name(_exchange) << std::endl;
     stream << "pairId=" << _pairId << std::endl;
+    stream << "startTime=" << _startTime << std::endl;
     stream << "limitBuyPrice=" << _limitBuyPrice.value << std::endl;
     if(_quantity) stream << "quantity=" << _quantity->toString() << std::endl;
     stream << "withConsole=" << _withConsole << std::endl;
     stream << "greedy=" << _greedyMode << std::endl;
-    stream << "exchange=" << magic_enum::enum_name(_exchange) << std::endl;
+    if(_maxAmount) stream << "maxAmount=" << *_maxAmount << std::endl;
 
     return stream.str();
 }
@@ -199,6 +223,31 @@ PriceThresholdConfig BotConfig::getPriceThresholdConfig() const
         highBound.lossThreshold=0.9;
     }
     return {.lowBound = lowBound, .highBound = highBound};
+}
+
+unsigned int BotConfig::getThreadNumber() const
+{
+    switch(_exchange)
+    {
+        case Exchange::Gateio:
+        return 10;
+
+        default:
+        return 1;
+    }
+}
+
+unsigned int BotConfig::getDurationBeforeStartMs() const
+{
+    const int defaultValue = 50; // milliseconds
+    switch(_exchange)
+    {
+        case Exchange::Kucoin:
+        return 20000 - defaultValue; // 20sec - 50ms
+
+        default:
+        return 50; 
+    }
 }
 
 }

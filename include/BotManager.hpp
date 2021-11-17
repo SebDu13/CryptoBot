@@ -4,6 +4,7 @@
 #include <memory>
 #include "ListingBot.hpp"
 #include <atomic>
+#include <string>
 
 namespace Bot{
 
@@ -16,9 +17,10 @@ class BotManager
 
     private:
     const Bot::BotConfig& _config;
-    const int _botNumber = 10;
+    const unsigned int _botNumber;
+    const unsigned int _extraDurationMs;
+    const std::string _openingTime;
     std::vector<std::unique_ptr<ListingBot>> _listingBots;
-    const int _extraDurationUs = 35000;
     std::chrono::system_clock::time_point _startTime;
     std::atomic<bool> _stopFlag = false;
 };
