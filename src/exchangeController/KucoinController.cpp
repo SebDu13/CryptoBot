@@ -108,7 +108,7 @@ OrderResult KucoinController::sendOrder(const std::string& currencyPair, const S
     size_t tryNumber = 0;
     do
     {
-        sleep(1);
+        sleep(2);
         _kucoinAPI.getOrder(result["data"]["orderId"].asString(), resultOrderInfo);
         LOG_DEBUG << resultOrderInfo << std::endl << "tryNumber=" << tryNumber;
         const auto& data = resultOrderInfo["data"];
