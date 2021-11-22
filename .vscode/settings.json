@@ -68,7 +68,9 @@
         "charconv": "cpp",
         "codecvt": "cpp",
         "valarray": "cpp",
-        "forward_list": "cpp"
+        "forward_list": "cpp",
+        "regex": "cpp",
+        "shared_mutex": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

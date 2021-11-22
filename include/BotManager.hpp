@@ -23,6 +23,8 @@ class BotManager
     std::vector<std::unique_ptr<ListingBot>> _listingBots;
     std::chrono::system_clock::time_point _startTime;
     std::atomic<bool> _stopFlag = false;
+
+    void wait();
 };
 
 }

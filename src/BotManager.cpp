@@ -36,14 +36,8 @@ void BotManager::startOnTime()
 
     LOG_INFO << _botNumber << " bots built. Wait for opening..." << _openingTime;
 
-    long long count;
-    do
-    {
-        count = std::chrono::duration<double, std::micro>(_startTime - std::chrono::high_resolution_clock::now() -std::chrono::milliseconds(_extraDurationMs)).count();
-    }while(  count > 0);
-
-    //while(duration<long, std::micro>(_startTime - high_resolution_clock::now()).count() > 0);
-
+    wait();
+    
     LOG_INFO << "Starting bots...";
 
     for(std::unique_ptr<ListingBot>& bot: _listingBots)
@@ -52,6 +46,11 @@ void BotManager::startOnTime()
             bot->runAsync(&_stopFlag);
         usleep(500); // 500 micro seconds delay between each bot
     }
+}
+
+void BotManager::wait()
+{
+    while(std::chrono::duration<double, std::micro>(_startTime - std::chrono::high_resolution_clock::now() -std::chrono::milliseconds(_extraDurationMs)).count() > 0);
 }
 
 }
