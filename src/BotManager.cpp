@@ -39,7 +39,7 @@ void BotManager::startOnTime()
     long long count;
     do
     {
-        count = std::chrono::duration<double, std::micro>(_startTime - std::chrono::high_resolution_clock::now() -std::chrono::milliseconds(_extraDurationMs)).count();
+        count = std::chrono::duration<double, std::micro>(_startTime - std::chrono::high_resolution_clock::now() - std::chrono::milliseconds(_extraDurationMs)).count();
     }while(  count > 0);
 
     //while(duration<long, std::micro>(_startTime - high_resolution_clock::now()).count() > 0);

@@ -243,7 +243,7 @@ unsigned int BotConfig::getDurationBeforeStartMs() const
     switch(_exchange)
     {
         case Exchange::Kucoin:
-        return 20000 + 100; // 20sec + 100ms
+        return 20000 - 100; // 20sec + 100ms
 
         default:
         return 50; 

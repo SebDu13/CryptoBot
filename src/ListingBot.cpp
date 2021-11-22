@@ -162,13 +162,18 @@ void ListingBot::shouldSellSync(const ExchangeController::OrderResult& buyOrderR
             continue;
 
         if(tickerResult.last < (tickerResult.high24h * lossThreshold))
+        {
+            LOG_INFO << "Price went under loss threshold(" << lossThreshold << "), stopping... ";
             return;
+        }
 
         if(!priceWatcher.isMoving(tickerResult.last, profit))
         {
             LOG_INFO << "Price doesn't move anymore, stopping... ";
             return;
         }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     LOG_INFO << "key pressed, stopping...";
@@ -214,6 +219,7 @@ ExchangeController::OrderResult ListingBot::sellAll(const ExchangeController::Or
         if(smallPrice * amountLeft < _exchangeController->getMinOrderSize())
             smallPrice = (_exchangeController->getMinOrderSize() * tools::FixedPoint(1.1)) / amountLeft;
 
+        LOG_INFO << "amount=" << amountLeft << " price=" << smallPrice;
         return _exchangeController->sendOrder(_pairId, ExchangeController::Side::sell, amountLeft, smallPrice);
     }
     return ExchangeController::OrderResult();
