@@ -1,0 +1,2 @@
+59 9 22 11 * sleep 30 && . $HOME/.profile && nice -15 /root/bot/CryptoBot2 --exchange Gateio --startTime 10:00 --id SONAR_USDT --limitPrice 5 --greedy
+59 11 22 11 * sleep 30 && . $HOME/.profile && nice -15 /root/bot/CryptoBot2 --exchange Gateio --startTime 12:00 --id XDEFI_USDT --limitPrice 4
