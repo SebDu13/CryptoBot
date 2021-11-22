@@ -35,9 +35,9 @@ void BotManager::startOnTime()
         _listingBots.emplace_back(std::make_unique<ListingBot>(_config));
 
     LOG_INFO << _botNumber << " bots built. Wait for opening..." << _openingTime;
-
-    wait();
     
+    wait();
+
     LOG_INFO << "Starting bots...";
 
     for(std::unique_ptr<ListingBot>& bot: _listingBots)

@@ -32,7 +32,6 @@ void convertCurrencyPair(std::string& pairId, Bot::Exchange exchange)
 bool checkStartTime(const std::string& startTime)
 {
      return std::regex_match(startTime, std::regex("^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"));
-     //return std::regex_match(startTime, std::regex("^([0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"));
 }
 
 }
@@ -190,7 +189,7 @@ TimeThresholdConfig BotConfig::getTimeThresholdConfig() const
     if(_greedyMode)
     {
         lowBound.profit = 1.05;
-        lowBound.timeSec=8;
+        lowBound.timeSec=10;
         highBound.profit = 1.6;
         highBound.timeSec=3;
         thresholdPercent=0.05;
@@ -198,7 +197,7 @@ TimeThresholdConfig BotConfig::getTimeThresholdConfig() const
     else
     {
         lowBound.profit = 1.05;
-        lowBound.timeSec=8;
+        lowBound.timeSec=10;
         highBound.profit = 1.3;
         highBound.timeSec=3;
         thresholdPercent=0.1;
@@ -244,7 +243,7 @@ unsigned int BotConfig::getDurationBeforeStartMs() const
     switch(_exchange)
     {
         case Exchange::Kucoin:
-        return 20000 - defaultValue; // 20sec - 50ms
+        return 20000 - 100; // 20sec + 100ms
 
         default:
         return 50; 
