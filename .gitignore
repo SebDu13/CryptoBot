@@ -48,3 +48,4 @@ _deps
 CryptoBot2
 .vscode/c_cpp_properties.json
 logs
+crontab

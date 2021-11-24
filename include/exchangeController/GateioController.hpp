@@ -19,8 +19,11 @@ class GateioController: public AbstractExchangeController
     Quantity computeMaxQuantity(const Price& price) const override;
     Quantity getMinOrderSize() const override;
     Quantity getAmountLeft(const OrderResult& buyOrderResult) const override;
+    Quantity prepareAccount(const Price& price,const std::optional<Quantity>& maxAmount, const std::optional<Quantity>& quantity) const override;
+
 
     private:
+    const std::string subAccountId = "8630502"; // a mettre dans la config ? 
     GateIoCPP _gateIoAPI;
     std::unordered_set<std::string> allCurrencyPairsCache;
     std::size_t rawCurrencyPairsResultSize;

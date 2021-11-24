@@ -41,53 +41,9 @@ int main(int argc, char **argv)
 	Bot::BotManager botmanager(botConfig);
 	botmanager.startOnTime();
 
-	// *** KUCOIN ***
-	/*Json::Value result24hr;
-	Json::Value resultTicker;
-	Json::Value resultOrder;
-	auto apiKeys = botConfig.getApiKeys(Bot::Exchange::Kucoin);*/
+	//Bot::ListingBot listingBot(botConfig);
 
-	/*using boost::multiprecision::cpp_dec_float_50;
-	cpp_dec_float_50 un = cpp_dec_float_50("0.000000000001");
-	cpp_dec_float_50 deux = cpp_dec_float_50("0.00001");
-	LOG_DEBUG << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << (deux - un).convert_to<std::string>();*/
-
-	//KucoinCPP kucoinCPP(apiKeys.pub, apiKeys.secret, apiKeys.passphrase);
-	/*int i = 10;
-	while(true)
-	{
-		kucoinCPP.getTicker(botConfig.getPairId(), resultTicker);
-		LOG_DEBUG << "getTicker " << resultTicker;
-		kucoinCPP.get24HrStats(botConfig.getPairId(), resultTicker);
-		LOG_DEBUG << "result24hr " << resultTicker;
-	}*/
-	/*kucoinCPP.sendLimitOrder(botConfig.getPairId()
-		, KucoinCPP::Side::buy
-		, KucoinCPP::TimeInForce::IOC
-		, *botConfig.getQuantity()
-		, botConfig.getLimitBuyPrice()
-		,resultOrder);*/
-	/*kucoinCPP.getOrder("61911e97fe8b030001e1333d", resultOrder );
-	LOG_DEBUG << "resultOrder " << resultOrder;*/
-
-	/*ExchangeController::KucoinController kucoinController(apiKeys);
-	Bot::ListingBot newListedCurrencyBot(
-		kucoinController
-		, botConfig);
-	//newListedCurrencyBot.run();
-	newListedCurrencyBot.watch();
-	/*LOG_DEBUG << kucoinController.sendOrder(botConfig.getPairId()
-		, ExchangeController::Side::buy
-		, *botConfig.getQuantity()
-		, botConfig.getLimitBuyPrice()).toString();*/
-
-	// ***
-
-	/*Bot::ListingBot listingBot(
-		ExchangeController::ExchangeControllerFactory::create(botConfig)
-		, botConfig);
-
-	listingBot.run();*/
+	//listingBot.run();
 	//listingBot.watch();
 
 	return 0;	

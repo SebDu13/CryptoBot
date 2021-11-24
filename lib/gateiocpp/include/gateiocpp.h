@@ -29,6 +29,13 @@ class GateIoCPP {
 			poc
 		};
 
+		/* Names match with the api parameters, do not rename */
+		enum class Direction
+		{
+			To,
+			From
+		};
+
 		 GateIoCPP(const std::string &api_key, const std::string &secret_key);
 		 virtual ~GateIoCPP();
 		 void cleanup();
@@ -44,7 +51,13 @@ class GateIoCPP {
 			Json::Value &json_result ) const;
 		 void get_spot_tickers(const std::string& currencyPair, SpotTickersResult &json_result) const;
 		 void getOrderBook(const std::string& currencyPair, std::string &result) const;
-		 void getAccountBalances(Json::Value &result) const;
+		 void getAccountBalance(Json::Value &result) const;
+		 void getSubAccountBalances(const std::string& uid, Json::Value &result) const;
+		 void transferSubAnnounts(const std::string& currency
+			, const std::string& subaccountUid
+			, Direction direction
+			, Quantity amount
+			, Json::Value &result) const;
 
 		private:
 		std::string api_key = "";
@@ -59,6 +72,7 @@ class GateIoCPP {
 			,std::string &str_result) const;
 		 std::vector <std::string> generateSignedHttpHeader(const std::string& action
 		, const std::string& prefix
+		, const std::string& param
 		, const std::string& body) const;
 
 		template<class ResultType>

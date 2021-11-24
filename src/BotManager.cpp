@@ -1,5 +1,6 @@
 #include "BotManager.hpp"
 #include "logger.hpp"
+#include "exchangeController/ExchangeControllerFactory.hpp"
 
 namespace Bot{
 
@@ -7,6 +8,7 @@ BotManager::BotManager(const Bot::BotConfig& config)
 :_config(config)
 , _botNumber(config.getThreadNumber())
 , _extraDurationMs(config.getDurationBeforeStartMs())
+, _delayBetweenSpawn(config.getDelayBetweenBotsSpawnUs())
 , _openingTime(config.getStartTime())
 {
     std::time_t time = std::time(0);   // get today date
@@ -17,6 +19,9 @@ BotManager::BotManager(const Bot::BotConfig& config)
 	ss >> std::get_time(&later, "%H:%M"); // add hour
     auto t_time_later = timegm(&later);
     _startTime = std::chrono::system_clock::from_time_t(t_time_later);
+
+    /*ExchangeController::AbstractExchangeController exchangeController(ExchangeController::ExchangeControllerFactory::create(config);
+    exchangeController*/
 }
 
 BotManager::~BotManager()
@@ -35,7 +40,7 @@ void BotManager::startOnTime()
         _listingBots.emplace_back(std::make_unique<ListingBot>(_config));
 
     LOG_INFO << _botNumber << " bots built. Wait for opening..." << _openingTime;
-    
+
     wait();
 
     LOG_INFO << "Starting bots...";
@@ -44,13 +49,15 @@ void BotManager::startOnTime()
     {
         if(bot)
             bot->runAsync(&_stopFlag);
-        usleep(500); // 500 micro seconds delay between each bot
+        usleep(_delayBetweenSpawn);
     }
 }
 
 void BotManager::wait()
 {
-    while(std::chrono::duration<double, std::micro>(_startTime - std::chrono::high_resolution_clock::now() -std::chrono::milliseconds(_extraDurationMs)).count() > 0);
+    while(std::chrono::duration<double, std::micro>(_startTime 
+        - std::chrono::high_resolution_clock::now() 
+        - std::chrono::milliseconds(_extraDurationMs)).count() > 0);
 }
 
 }

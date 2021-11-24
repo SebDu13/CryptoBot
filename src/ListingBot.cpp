@@ -17,6 +17,7 @@ ListingBot::ListingBot(const BotConfig& botConfig)
 , _limitBuyPrice(botConfig.getLimitBuyPrice())
 , _priceThresholdConfig(botConfig.getPriceThresholdConfig())
 , _timeThreasholdConfig(botConfig.getTimeThresholdConfig())
+, _runningMode(botConfig.getMode())
 {
     if(auto quantityOpt = botConfig.getQuantity())
         _quantity = *quantityOpt;
@@ -58,15 +59,28 @@ void ListingBot::notifyStop()
 
 void ListingBot::run()
 {
-    // Wait
-    std::optional<ExchangeController::OrderResult> buyOrderResult = buySync();
-    if(!buyOrderResult)
-        return;
+    std::optional<ExchangeController::OrderResult> buyOrderResult;
 
-    if(buyOrderResult->status != ExchangeController::OrderStatus::Closed)
+    if(_runningMode == RunningMode::WatchAndSell)
     {
-        LOG_ERROR << "Cannot buy " << _pairId << " because buyOrderResult.status=" << magic_enum::enum_name(buyOrderResult->status);
-        return;
+        buyOrderResult = { .status = ExchangeController::OrderStatus::Closed
+            , .fillPrice = _quantity * _limitBuyPrice
+            , .filledTotal = _quantity * _limitBuyPrice
+            , .amount = _quantity
+            , .fee = Quantity("0")};
+    }
+    else
+    {
+        // Wait
+        buyOrderResult = buySync();
+        if(!buyOrderResult)
+            return;
+
+        if(buyOrderResult->status != ExchangeController::OrderStatus::Closed)
+        {
+            LOG_ERROR << "Cannot buy " << _pairId << " because buyOrderResult.status=" << magic_enum::enum_name(buyOrderResult->status);
+            return;
+        }
     }
 
     notifyStop();

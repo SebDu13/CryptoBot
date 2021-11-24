@@ -151,7 +151,7 @@ void GateIoCPP::send_limit_order (
 
 	//LOG_DEBUG << "url = " << url << " body = " << body;
 	std::string action("POST");
-	const auto httpHeader = generateSignedHttpHeader(action, prefix, body);
+	const auto httpHeader = generateSignedHttpHeader(action, prefix, "", body);
 
 	LOG_DEBUG;
 	std::string result;
@@ -164,7 +164,7 @@ void GateIoCPP::send_limit_order (
 		LOG_ERROR << "Failed to get anything.";
 }
 
-void GateIoCPP::getAccountBalances(Json::Value &result) const
+void GateIoCPP::getAccountBalance(Json::Value &result) const
 {
 	std::string url(GATEIO_HOST);
 	std::string prefix("/api/v4/wallet/total_balance");
@@ -173,7 +173,7 @@ void GateIoCPP::getAccountBalances(Json::Value &result) const
 	std::string body;
 	std::string stringResult;
 
-	const auto httpHeader = generateSignedHttpHeader(action, prefix, body);
+	const auto httpHeader = generateSignedHttpHeader(action, prefix, "", body);
 	curl_api_with_header( url, httpHeader, body, action, stringResult );
 
 	//LOG_INFO << stringResult;
@@ -186,12 +186,77 @@ void GateIoCPP::getAccountBalances(Json::Value &result) const
 		LOG_ERROR << "Failed to get anything.";
 }
 
+void GateIoCPP::getSubAccountBalances(const std::string& uid, Json::Value &result) const
+{
+	std::string url(GATEIO_HOST);
+	std::string prefix("/api/v4/wallet/sub_account_balances");
+	std::string param("sub_uid=" + uid); // 8630502
+	url += prefix + "?" + param;
+	std::string action("GET");
+	std::string body;
+	std::string stringResult;
+
+	const auto httpHeader = generateSignedHttpHeader(action, prefix, param, body);
+	curl_api_with_header( url, httpHeader, body, action, stringResult );
+
+	LOG_INFO << stringResult;
+
+	if ( stringResult.size() > 0 ) 
+	{
+		convertToJson(stringResult, result);
+	} 
+	else 
+		LOG_ERROR << "Failed to get anything.";
+}
+
+void GateIoCPP::transferSubAnnounts(const std::string& currency
+	, const std::string& subaccountUid
+	, Direction direction
+	, Quantity amount
+	, Json::Value &result) const
+{
+	if ( api_key.size() == 0 || secret_key.size() == 0 )
+	{
+		LOG_ERROR << "API Key and Secret Key has not been set.";
+		return ;
+	}
+
+	std::string url(GATEIO_HOST);
+	std::string prefix("/api/v4/wallet/sub_account_transfers");
+	std::string action("POST");
+	url += prefix;
+
+	Json::Value bodyJson;
+	bodyJson["currency"] = currency;
+	bodyJson["sub_account"] = subaccountUid;
+	bodyJson["direction"] = std::string(magic_enum::enum_name(direction));;
+	bodyJson["amount"] = amount.toString();
+	bodyJson["sub_account_type"] = "spot";
+	std::string body = bodyJson.toStyledString();
+
+	std::string stringResult;
+
+	const auto httpHeader = generateSignedHttpHeader(action, prefix, "", body);
+	curl_api_with_header( url, httpHeader, body, action, stringResult );
+
+	if ( stringResult.size() > 0 ) 
+	{
+		convertToJson(stringResult, result);
+	} 
+	else 
+		LOG_ERROR << "Failed to get anything.";
+
+}
+
 void GateIoCPP::curl_api( std::string &url, std::string &result_json ) const
 {
 	curl_api_with_header( url , {}, "" , "GET", result_json );	
 }
 
-std::vector <std::string> GateIoCPP::generateSignedHttpHeader(const std::string& action, const std::string& prefix, const std::string& body) const
+std::vector <std::string> GateIoCPP::generateSignedHttpHeader(const std::string& action
+	, const std::string& prefix
+	, const std::string& param
+	, const std::string& body) const
 {
 	std::string bodyHash = tools::sha512(body.c_str());
 	auto timeStamp = tools::get_current_epoch();
@@ -199,7 +264,7 @@ std::vector <std::string> GateIoCPP::generateSignedHttpHeader(const std::string&
 	std::stringstream sign;
 	sign << action << std::endl;
 	sign << prefix << std::endl;
-	sign << "" << std::endl; /* supposed to be query param */ 
+	sign << param << std::endl; 
 	sign << bodyHash << std::endl;
 	sign << timeStamp;
 

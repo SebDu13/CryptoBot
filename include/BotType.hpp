@@ -58,4 +58,10 @@ struct ApiKeys
     std::string passphrase;
 };
 
+enum class RunningMode
+{
+    Normal,
+    WatchAndSell
+};
+
 }

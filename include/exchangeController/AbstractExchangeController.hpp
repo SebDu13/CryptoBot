@@ -121,6 +121,8 @@ class AbstractExchangeController
         // the Min order size (amount * price) the exchange accepts. For instance 1 on GateIO
         virtual Quantity getMinOrderSize() const = 0;
         virtual Quantity getAmountLeft(const OrderResult& buyOrderResult) const = 0;
+        // Transfer the right amount on the trading account
+        virtual Quantity prepareAccount(const Price& price,const std::optional<Quantity>& maxAmount, const std::optional<Quantity>& quantity) const = 0;
 };
 
 } /* end ExchangeController namespace */ 

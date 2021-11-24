@@ -22,8 +22,10 @@ namespace Bot
         Exchange getExchange() const {return _exchange;};
         std::optional<Quantity> getMaxAmount() const {return _maxAmount;};
         std::string getStartTime() const {return _startTime;};
+        RunningMode getMode() const {return _runningMode;};
         unsigned int getThreadNumber() const;
         unsigned int getDurationBeforeStartMs() const;
+        unsigned int getDelayBetweenBotsSpawnUs() const;
 
         private:
         std::string _pairId = "";
@@ -34,5 +36,6 @@ namespace Bot
         Exchange _exchange;
         std::optional<Quantity> _maxAmount = std::nullopt;
         std::string _startTime ="";
+        RunningMode _runningMode = RunningMode::Normal;
     };
 }

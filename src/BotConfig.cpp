@@ -15,6 +15,15 @@ std::string printExchanges()
     return stream.str();
 }
 
+std::string printModes()
+{
+    std::stringstream stream;
+    stream << "RunningMode supported (default Normal):";
+    for (auto name : magic_enum::enum_names<Bot::RunningMode>())
+        stream << " " << name;
+    return stream.str();
+}
+
 void convertCurrencyPair(std::string& pairId, Bot::Exchange exchange)
 {
     switch (exchange)
@@ -53,7 +62,8 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
     ("greedy", "Duration used to sell if the the price doesn't move and price thresholds are more permissive.")
     ("exchange", po::value<std::string>(), printExchanges().c_str())
     ("maxAmount", po::value<std::string>(), "Max amount to trade (in USDT)")
-    ("startTime", po::value<std::string>(), "Start token listing time. hh:mm UTC");
+    ("startTime", po::value<std::string>(), "Start token listing time. hh:mm UTC")
+    ("mode", po::value<std::string>(), printModes().c_str());
 
     po::variables_map vm;        
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -126,8 +136,26 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
         return Status::Failure;
     }
 
-    convertCurrencyPair(_pairId, _exchange);
+    if(vm.count("mode"))
+    {
+        if(auto modeOpt = magic_enum::enum_cast<Bot::RunningMode>(vm["mode"].as<std::string>()))
+        {
+            _runningMode = *modeOpt;
 
+            if( _runningMode == RunningMode::WatchAndSell && !vm.count("quantity"))
+            {
+                LOG_ERROR << "quantity required with " << magic_enum::enum_name(_runningMode) << " mode";
+                return Status::Failure;
+            }
+        }
+        else
+        {
+            LOG_ERROR << "invalid mode name. " << printModes();
+            return Status::Failure;
+        }
+    }
+
+    convertCurrencyPair(_pairId, _exchange);
     return Status::Success;
 }
 
@@ -178,6 +206,7 @@ std::string BotConfig::toString() const
     stream << "withConsole=" << _withConsole << std::endl;
     stream << "greedy=" << _greedyMode << std::endl;
     if(_maxAmount) stream << "maxAmount=" << *_maxAmount << std::endl;
+    stream << "runningMode=" << magic_enum::enum_name(_runningMode) << std::endl;
 
     return stream.str();
 }
@@ -198,7 +227,7 @@ TimeThresholdConfig BotConfig::getTimeThresholdConfig() const
     {
         lowBound.profit = 1.05;
         lowBound.timeSec=10;
-        highBound.profit = 1.3;
+        highBound.profit = 1.2;
         highBound.timeSec=3;
         thresholdPercent=0.1;
     }
@@ -227,9 +256,13 @@ PriceThresholdConfig BotConfig::getPriceThresholdConfig() const
 
 unsigned int BotConfig::getThreadNumber() const
 {
+    if(_runningMode == RunningMode::WatchAndSell)
+        return 1;
+
     switch(_exchange)
     {
         case Exchange::Gateio:
+        case Exchange::Kucoin:
         return 10;
 
         default:
@@ -239,14 +272,29 @@ unsigned int BotConfig::getThreadNumber() const
 
 unsigned int BotConfig::getDurationBeforeStartMs() const
 {
+    if(_runningMode == RunningMode::WatchAndSell)
+        return 0;
+
     const int defaultValue = 50; // milliseconds
     switch(_exchange)
     {
         case Exchange::Kucoin:
-        return 20000 - 100; // 20sec + 100ms
+        return 20000 - defaultValue;
 
         default:
-        return 50; 
+        return defaultValue;
+    }
+}
+
+unsigned int BotConfig::getDelayBetweenBotsSpawnUs() const
+{
+    switch(_exchange)
+    {
+        case Exchange::Kucoin:
+        return 10000; // 10ms
+
+        default:
+        return 500;
     }
 }
 

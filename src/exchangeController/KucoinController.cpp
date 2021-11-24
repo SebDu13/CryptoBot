@@ -151,6 +151,11 @@ OrderResult KucoinController::sendOrder(const std::string& currencyPair, const S
         return Quantity();
     }
 
+    Quantity KucoinController::prepareAccount(const Price& price,const std::optional<Quantity>& maxAmount, const std::optional<Quantity>& quantity) const
+    {
+        return computeMaxQuantity(price); // account transfer to do
+    }
+
     Quantity KucoinController::getMinOrderSize() const
     {
         return Quantity{"1"};

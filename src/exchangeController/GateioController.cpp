@@ -230,7 +230,11 @@ OrderResult GateioController::sendOrder(const std::string& currencyPair, const S
 Quantity GateioController::computeMaxQuantity(const Price& price) const
 {
     Json::Value result;
-    _gateIoAPI.getAccountBalances(result);
+    _gateIoAPI.getAccountBalance(result);
+
+    /*Json::Value result2;
+    _gateIoAPI.getSubAccountBalances(result2);
+    LOG_INFO << "subAccount result: " << result2;*/
 
     if(result["details"]["spot"]["currency"] == "USDT")
     {
@@ -242,6 +246,12 @@ Quantity GateioController::computeMaxQuantity(const Price& price) const
     }
 
     return Quantity{};
+}
+
+Quantity GateioController::prepareAccount(const Price& price,const std::optional<Quantity>& maxAmount, const std::optional<Quantity>& quantity) const
+{
+    //_gateIoAPI.transferSubAnnounts("USDT", )
+    return Quantity();
 }
 
 Quantity GateioController::getMinOrderSize() const

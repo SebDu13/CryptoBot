@@ -7,6 +7,7 @@
 #include <map>
 #include <vector>
 #include <exception>
+#include <chrono>
 
 #include "kucoincpp.hpp"
 #include "logger.hpp"
@@ -162,7 +163,7 @@ void KucoinCPP::sendLimitOrder (
 	url += prefix;
 
 	Json::Value bodyJson;
-	bodyJson["clientOid"] = std::to_string(tools::get_current_epoch());
+	bodyJson["clientOid"] = std::to_string(duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
 	bodyJson["side"] = std::string(magic_enum::enum_name(side));
 	bodyJson["symbol"] = currency_pair;
 	bodyJson["type"] = "limit";
