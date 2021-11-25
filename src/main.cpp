@@ -41,10 +41,5 @@ int main(int argc, char **argv)
 	Bot::BotManager botmanager(botConfig);
 	botmanager.startOnTime();
 
-	//Bot::ListingBot listingBot(botConfig);
-
-	//listingBot.run();
-	//listingBot.watch();
-
 	return 0;	
 }

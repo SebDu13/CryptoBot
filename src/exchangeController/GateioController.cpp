@@ -21,69 +21,6 @@ GateIoCPP::Side convertFrom(ExchangeController::Side side)
     }
 }
 
-// in the sequence below, for an "id" pattern we want to return IHT_ETH
-//{"id":"IHT_ETH","base":"IHT","quote":"ETH","fee":"0.2","min_quote_amount":"0.001","amount_precision":1,"precision":9,"trade_status":"tradable","sell_start":0,"buy_start":0}
-std::string getFieldFromPattern(const std::string& input, const std::string& Pattern)
-{
-    if(std::size_t patternPos = input.find(Pattern, 0); patternPos != std::string::npos)
-        if(std::size_t nextQuotePos = input.find("\"", patternPos + Pattern.length()); nextQuotePos != std::string::npos)
-            return input.substr(patternPos + Pattern.length(), nextQuotePos - (Pattern.length()+patternPos));
-
-    return "";
-}
-
-std::optional<ExchangeController::CurrencyPair> extractPairFromJson(const GateIoCPP::CurrencyPairsResult& result, std::size_t& offset)
-{
-    offset = result.find("{", offset);
-    if(offset != std::string::npos)
-    {
-        if(std::size_t next_braket_position = result.find("}", offset); next_braket_position != std::string::npos)
-        {
-            // here pair has to look like: {"id":"IHT_ETH","base":"IHT"," ... }
-            const std::string pair(result.substr(offset, next_braket_position-offset));
-            offset +=idPattern.length();
-            return std::optional<ExchangeController::CurrencyPair>({getFieldFromPattern(pair, idPattern)
-                , getFieldFromPattern(pair, basePattern)
-                , getFieldFromPattern(pair, quotePattern)});
-        }
-    }
-    return std::nullopt;
-}
-
-// We want to extract the pair ID
-// pattern : {"id":"STRONG_USDT","base":"STRONG","quote":"USDT","fee":"0.2","min_quote_amount":"1","amount_precision":3,"precision":2,"trade_status":"tradable","sell_start":0,"buy_start":0},{"id"
-// let's search "id":" and then the next " in order to get SRONG_USDT
-template<typename Contener>
-Contener extractPairsfromJson(const GateIoCPP::CurrencyPairsResult& result)
-{
-    CHRONO_THIS_SCOPE;
-
-    Contener setOfPairs;
-    std::size_t offset=0;
-    while(offset < std::string::npos)
-    {
-        if(const auto& pairFromJsonOpt = extractPairFromJson(result, offset))
-            setOfPairs.emplace(pairFromJsonOpt->id);
-        else if(offset < std::string::npos)
-        {
-            LOG_ERROR << "Could not extract a pair from result at position " << offset << " with result = " << result;
-            throw ExchangeController::ExchangeControllerException("extractPairsfromJson failed in GateioController. Check logs from details");
-        }
-    }
-
-    return setOfPairs;
-}
-
-bool sanityCheck(const GateIoCPP::CurrencyPairsResult& result)
-{  
-    // Let's check just some fields
-    return result.length() > 1
-        && result.find("\"id\"", 0) != std::string::npos
-        && result.find("\"base\"", 0) != std::string::npos
-        && result.find("\"quote\"", 0) != std::string::npos
-        && result.find("\"fee\"", 0) != std::string::npos;
-}
-
 ExchangeController::OrderStatus fillOrderStatus(const Json::Value& result)
 {
     // error Json contain message field
@@ -121,70 +58,10 @@ namespace ExchangeController{
 
 GateioController::GateioController(const Bot::ApiKeys& apiKeys):_gateIoAPI(apiKeys.pub, apiKeys.secret)
 {
-    /*GateIoCPP::CurrencyPairsResult result;
-    _gateIoAPI.get_currency_pairs(result);
-    //result = "{\"id\":\"STRONG_USDT\",\"base\":\"STRONG\",\"quote\":\"USDT\",\"fee\":\"0.2\",\"min_quote_amount\":\"1\",\"amount_precision\":3,\"precision\":2,\"trade_status\":\"tradable\",\"sell_start\":0,\"buy_start\":0},{\"id\":\"POUETTE\",\"base\":\"STRONG\",\"quote\":\"USDT\",\"fee\":\"0.2\",\"min_quote_amount\":\"1\",\"amount_precision\":3,\"precision\":2,\"trade_status\":\"tradable\",\"sell_start\":0,\"buy_start\":0}";
-    if(!sanityCheck(result))
-        throw ExchangeControllerException("Sanity check failed in GateioController()");
-    
-    allCurrencyPairsCache = extractPairsfromJson<decltype(allCurrencyPairsCache)>(result);
-    rawCurrencyPairsResultSize = result.size();
-    LOG_INFO << allCurrencyPairsCache.size() << " currency pairs listed on GateIO"; */
 }
 
 GateioController::~GateioController()
 {
-}
-
-// We want to find the first pair quoted in USDT. New pairs are generally quoted in USDT and ETH
-std::optional<CurrencyPair> GateioController::findNewPairFrom(const GateIoCPP::CurrencyPairsResult& result, const std::string& quote) const
-{
-    CHRONO_THIS_SCOPE;
-
-    std::size_t offset=0;
-    while(offset < std::string::npos)
-    {
-        if(auto currencyPair = extractPairFromJson(result, offset); !allCurrencyPairsCache.contains(currencyPair->id))
-            if(currencyPair->id.find(quote) != std::string::npos)
-                return currencyPair;
-            else
-                LOG_INFO << "New pair[" << currencyPair->id <<"] found but not quoted on " << quote;
-    }
-    return std::nullopt;
-}
-
-CurrencyPair GateioController::getNewCurrencyPairSync(const std::string& quote)  const
-{
-    //int i = 0;
-    while(true)
-    {
-        CHRONO_THIS_SCOPE;
-        GateIoCPP::CurrencyPairsResult result;
-        _gateIoAPI.get_currency_pairs(result);
-
-        /*++i;
-        if(i == 4)
-        {
-            result += ",{\"id\":\"POUETTE_USDT\",\"base\":\"STRONG\",\"quote\":\"USDT\",\"fee\":\"0.2\",\"min_quote_amount\":\"1\",\"amount_precision\":3,\"precision\":2,\"trade_status\":\"tradable\",\"sell_start\":0,\"buy_start\":0}";
-        }*/
-
-        if(!sanityCheck(result))
-            throw ExchangeControllerException("Sanity check failed in GateioController::getNewCurrencyPairSync()");
-
-        /*if(result.size() < rawCurrencyPairsResultSize)
-        {
-            LOG_WARNING << "allCurrencyPairsCache looks like not up to date, result.size() < rawCurrencyPairsResultSize "
-            << result.size() 
-            << "<"
-            << rawCurrencyPairsResultSize
-            << " reset allCurrencyPairsCache with result";
-            allCurrencyPairsCache = extractPairsfromJson<decltype(allCurrencyPairsCache)>(result);
-            rawCurrencyPairsResultSize = result.size();
-        }*/
-        if(result.size() > rawCurrencyPairsResultSize)
-            if(const auto& newPair = findNewPairFrom(result, quote))
-                return *newPair;
-    }
 }
 
 TickerResult GateioController::getSpotTicker(const std::string& currencyPair) const
@@ -232,9 +109,9 @@ Quantity GateioController::computeMaxQuantity(const Price& price) const
     Json::Value result;
     _gateIoAPI.getAccountBalance(result);
 
-    /*Json::Value result2;
-    _gateIoAPI.getSubAccountBalances(result2);
-    LOG_INFO << "subAccount result: " << result2;*/
+    Json::Value result2;
+    _gateIoAPI.getSubAccountBalances(GateioController::subAccountId, result2);
+    LOG_INFO << "subAccount result: " << result2;
 
     if(result["details"]["spot"]["currency"] == "USDT")
     {
@@ -242,16 +119,83 @@ Quantity GateioController::computeMaxQuantity(const Price& price) const
         LOG_INFO << "There is " << quantity << " USDT on spot account";
         const tools::FixedPoint percent("0.97");
 
-        return Quantity{floor((double)((quantity * percent)/price))};
+        return Quantity{(quantity * percent)/price};
     }
 
     return Quantity{};
 }
 
-Quantity GateioController::prepareAccount(const Price& price,const std::optional<Quantity>& maxAmount, const std::optional<Quantity>& quantity) const
+Quantity GateioController::getMainAccountBalance() const
 {
-    //_gateIoAPI.transferSubAnnounts("USDT", )
-    return Quantity();
+    Json::Value result;
+    _gateIoAPI.getAccountBalance(result);
+    if(result["details"]["spot"]["currency"] == "USDT")
+        return Quantity(result["details"]["spot"]["amount"].asString());
+    else
+        throw ExchangeController::ExchangeControllerException("Account amount is not in USDT. " + result.asString());
+}
+
+Quantity GateioController::getSubAccountBalance() const
+{
+    Json::Value result;
+    _gateIoAPI.getSubAccountBalances(GateioController::subAccountId, result);
+
+    return Quantity(result[0]["available"]["USDT"].asString());
+}
+
+Quantity GateioController::prepareAccount(const Price& price,const std::optional<Quantity>& maxAmountOpt, const std::optional<Quantity>& quantityOpt) const
+{
+    tools::FixedPoint percent{"0.99"};
+    
+    Quantity accountAmount = getMainAccountBalance();
+    LOG_INFO << "There is " << accountAmount << " USDT on spot account";
+
+    if(!maxAmountOpt && !quantityOpt)
+    {
+        Quantity subAccountAmount = getSubAccountBalance();
+        LOG_INFO << "There is " << subAccountAmount << " USDT on sub account";
+
+        Json::Value transferResult;
+        _gateIoAPI.transferSubAnnounts("USDT", GateioController::subAccountId, GateIoCPP::Direction::from, subAccountAmount , transferResult);
+
+        if(!transferResult.empty())
+            throw ExchangeController::ExchangeControllerException("Issue when transfering money on subaccount" + transferResult.asString());
+
+        return Quantity{((accountAmount + subAccountAmount) * percent)/price};
+    }
+
+    Quantity quantity = quantityOpt.value_or(0);
+    Quantity amountRequired = maxAmountOpt.value_or(quantity * price);
+    LOG_INFO << "Amount required on USDT on spot account: " << amountRequired;
+
+    // Not enough on main account
+    if(Quantity AmountNeeded = amountRequired - accountAmount; AmountNeeded > 0)
+    {
+        Quantity subAccountAmount = getSubAccountBalance();
+        LOG_INFO << "There is " << subAccountAmount << " USDT on sub account";
+
+        AmountNeeded = (subAccountAmount < AmountNeeded ? subAccountAmount : AmountNeeded);
+        Json::Value transferResult;
+        LOG_INFO << "Transfering " << AmountNeeded << " USDT from sub account";
+        _gateIoAPI.transferSubAnnounts("USDT", GateioController::subAccountId, GateIoCPP::Direction::from, AmountNeeded , transferResult);
+
+        if(!transferResult.empty())
+            throw ExchangeController::ExchangeControllerException("Issue when transfering money on subaccount" + transferResult.asString());
+        
+        return Quantity{((accountAmount + AmountNeeded) * percent)/price};
+    }
+    // Too much on main account
+    else if(Quantity extraAmount = accountAmount - amountRequired; extraAmount > 0)
+    {
+        Json::Value transferResult;
+        LOG_INFO << "Transfering " << extraAmount << " USDT to sub account";
+        _gateIoAPI.transferSubAnnounts("USDT", GateioController::subAccountId, GateIoCPP::Direction::to, extraAmount , transferResult);
+
+        if(!transferResult.empty())
+            throw ExchangeController::ExchangeControllerException("Issue when transfering money on subaccount" + transferResult.asString());
+    }
+
+    return Quantity{(amountRequired * percent)/price};
 }
 
 Quantity GateioController::getMinOrderSize() const

@@ -44,7 +44,6 @@ size_t curl_cb( void *content, size_t size, size_t nmemb, std::string *buffer )
 
 GateIoCPP::GateIoCPP(const std::string &api_key, const std::string &secret_key ) 
 {
-	LOG_INFO <<  "with api_key " << api_key;
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 	GateIoCPP::curl = curl_easy_init();
 	GateIoCPP::api_key = api_key;
@@ -53,14 +52,12 @@ GateIoCPP::GateIoCPP(const std::string &api_key, const std::string &secret_key )
 
 GateIoCPP::~GateIoCPP()
 {
-	LOG_INFO;
 	cleanup();
 }
 
 
 void GateIoCPP::cleanup()
 {
-	LOG_INFO;
 	curl_easy_cleanup(GateIoCPP::curl);
 	curl_global_cleanup();
 }
@@ -142,8 +139,8 @@ void GateIoCPP::send_limit_order (
 	bodyJson["account"] = "spot";
 	bodyJson["side"] = std::string(magic_enum::enum_name(side));
 	bodyJson["iceberg"] = "0";
-	bodyJson["amount"] = quantity.toString();
-	bodyJson["price"] = price.toString();
+	bodyJson["amount"] = quantity.toStringExact();
+	bodyJson["price"] = price.toStringExact();
 	bodyJson["time_in_force"] = std::string(magic_enum::enum_name(timeInForce));
 	bodyJson["auto_borrow"] = false;
 
@@ -199,7 +196,7 @@ void GateIoCPP::getSubAccountBalances(const std::string& uid, Json::Value &resul
 	const auto httpHeader = generateSignedHttpHeader(action, prefix, param, body);
 	curl_api_with_header( url, httpHeader, body, action, stringResult );
 
-	LOG_INFO << stringResult;
+	//LOG_INFO << stringResult;
 
 	if ( stringResult.size() > 0 ) 
 	{
@@ -238,14 +235,7 @@ void GateIoCPP::transferSubAnnounts(const std::string& currency
 
 	const auto httpHeader = generateSignedHttpHeader(action, prefix, "", body);
 	curl_api_with_header( url, httpHeader, body, action, stringResult );
-
-	if ( stringResult.size() > 0 ) 
-	{
-		convertToJson(stringResult, result);
-	} 
-	else 
-		LOG_ERROR << "Failed to get anything.";
-
+	convertToJson(stringResult, result); // if ok, result is empty
 }
 
 void GateIoCPP::curl_api( std::string &url, std::string &result_json ) const

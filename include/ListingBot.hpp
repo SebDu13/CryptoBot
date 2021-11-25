@@ -20,7 +20,7 @@ namespace Bot
 class ListingBot
 {
     public:
-    ListingBot(const BotConfig& botconfig);
+    ListingBot(const BotConfig& botconfig, Quantity quantity);
         
     virtual ~ListingBot();
     void run();

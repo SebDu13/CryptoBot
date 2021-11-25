@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/CryptoBot2",
-            "args": ["--id", "TWT-USDT", "--limitPrice", "1.2", "--withConsole", "--exchange", "Kucoin","--quantity","1"],
+            "args": ["--id", "ETH_USDT", "--startTime", "18:10", "--limitPrice", "3000", "--withConsole", "--exchange", "Gateio","--maxAmount","2000"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],

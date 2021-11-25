@@ -20,8 +20,21 @@ BotManager::BotManager(const Bot::BotConfig& config)
     auto t_time_later = timegm(&later);
     _startTime = std::chrono::system_clock::from_time_t(t_time_later);
 
-    /*ExchangeController::AbstractExchangeController exchangeController(ExchangeController::ExchangeControllerFactory::create(config);
-    exchangeController*/
+    if(config.getMode() == RunningMode::WatchAndSell)
+    {
+        if(auto quantityOpt = config.getQuantity())
+            _quantity = *quantityOpt;
+        else
+            throw std::runtime_error("quantity required with WatchAndSell mode");
+    }
+    else
+    {
+        _quantity = ExchangeController::ExchangeControllerFactory::create(config)->prepareAccount(config.getLimitBuyPrice()
+                                                                                                    , config.getMaxAmount()
+                                                                                                    , config.getQuantity());
+    }
+
+    LOG_INFO << "Quantity computed: " << _quantity;
 }
 
 BotManager::~BotManager()
@@ -37,7 +50,7 @@ void BotManager::startOnTime()
     }
  
     for(auto i = 0; i< _botNumber; ++i)
-        _listingBots.emplace_back(std::make_unique<ListingBot>(_config));
+        _listingBots.emplace_back(std::make_unique<ListingBot>(_config, _quantity));
 
     LOG_INFO << _botNumber << " bots built. Wait for opening..." << _openingTime;
 

@@ -218,7 +218,7 @@ TimeThresholdConfig BotConfig::getTimeThresholdConfig() const
     if(_greedyMode)
     {
         lowBound.profit = 1.05;
-        lowBound.timeSec=10;
+        lowBound.timeSec=12;
         highBound.profit = 1.6;
         highBound.timeSec=3;
         thresholdPercent=0.05;

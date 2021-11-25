@@ -60,7 +60,6 @@ KucoinCPP::KucoinCPP(const std::string &api_key, const std::string &secret_key, 
 , secret_key(secret_key)
 , passPhrase(passPhrase)
 {
-	LOG_INFO <<  "with api_key " << api_key;
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 }
 

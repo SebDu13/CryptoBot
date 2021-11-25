@@ -11,34 +11,21 @@
 namespace Bot
 {
 
-ListingBot::ListingBot(const BotConfig& botConfig)
+ListingBot::ListingBot(const BotConfig& botConfig, Quantity quantity)
 : _exchangeController(ExchangeController::ExchangeControllerFactory::create(botConfig))
 , _pairId(botConfig.getPairId())
 , _limitBuyPrice(botConfig.getLimitBuyPrice())
+, _quantity(quantity)
 , _priceThresholdConfig(botConfig.getPriceThresholdConfig())
 , _timeThreasholdConfig(botConfig.getTimeThresholdConfig())
 , _runningMode(botConfig.getMode())
 {
-    if(auto quantityOpt = botConfig.getQuantity())
-        _quantity = *quantityOpt;
-    else if(auto maxAmountOpt = botConfig.getMaxAmount())
-    {
-        _quantity = Quantity{floor((double)(*maxAmountOpt/_limitBuyPrice))};
-        LOG_INFO << "Quantity computed to " << _quantity << " according to maxAmout option";
-    }
-    else
-    {
-        _quantity = _exchangeController->computeMaxQuantity(_limitBuyPrice);
-        LOG_INFO << "Quantity automatically computed to " << _quantity; 
-    }
-    LOG_INFO << "Max position size: " << _quantity * _limitBuyPrice << " USDT";
 }
 
 ListingBot::~ListingBot()
 {
     if(_thread.joinable())
         _thread.join();
-    LOG_DEBUG;
 }
 
 bool ListingBot::shouldStop()

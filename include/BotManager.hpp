@@ -17,6 +17,7 @@ class BotManager
 
     private:
     const Bot::BotConfig& _config;
+    Quantity _quantity;
     const unsigned int _botNumber;
     const unsigned int _extraDurationMs;
     const unsigned int _delayBetweenSpawn;

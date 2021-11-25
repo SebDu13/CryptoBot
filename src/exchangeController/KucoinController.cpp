@@ -144,7 +144,7 @@ OrderResult KucoinController::sendOrder(const std::string& currencyPair, const S
                 Quantity quantity(account["available"].asString());
                 const tools::FixedPoint percent("0.97");
 
-                return Quantity{floor((double)((quantity * percent)/price))};
+                return Quantity{(quantity * percent)/price};
             }
         }
         LOG_DEBUG << result;

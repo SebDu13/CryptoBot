@@ -32,8 +32,8 @@ class GateIoCPP {
 		/* Names match with the api parameters, do not rename */
 		enum class Direction
 		{
-			To,
-			From
+			to,
+			from
 		};
 
 		 GateIoCPP(const std::string &api_key, const std::string &secret_key);

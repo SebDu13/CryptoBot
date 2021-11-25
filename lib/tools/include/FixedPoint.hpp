@@ -12,6 +12,7 @@ struct FixedPoint
 
     explicit FixedPoint():value(0) {} ;
     explicit FixedPoint(std::string str):value(str) {} ;
+    FixedPoint(int value):value(value) {} ;
     FixedPoint(ValueType value):value(value) {} ;
 
     friend std::ostream& operator<<(std::ostream& os, const FixedPoint& other);
