@@ -218,6 +218,12 @@ void GateIoCPP::transferSubAnnounts(const std::string& currency
 		return ;
 	}
 
+	if(amount == 0)
+	{
+		result.clear();
+		return;
+	}
+
 	std::string url(GATEIO_HOST);
 	std::string prefix("/api/v4/wallet/sub_account_transfers");
 	std::string action("POST");

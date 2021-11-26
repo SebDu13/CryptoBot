@@ -159,7 +159,7 @@ Quantity GateioController::prepareAccount(const Price& price,const std::optional
         _gateIoAPI.transferSubAnnounts("USDT", GateioController::subAccountId, GateIoCPP::Direction::from, subAccountAmount , transferResult);
 
         if(!transferResult.empty())
-            throw ExchangeController::ExchangeControllerException("Issue when transfering money on subaccount" + transferResult.asString());
+            throw ExchangeController::ExchangeControllerException("Issue when transfering money on subaccount" + transferResult.toStyledString());
 
         return Quantity{((accountAmount + subAccountAmount) * percent)/price};
     }
@@ -180,7 +180,7 @@ Quantity GateioController::prepareAccount(const Price& price,const std::optional
         _gateIoAPI.transferSubAnnounts("USDT", GateioController::subAccountId, GateIoCPP::Direction::from, AmountNeeded , transferResult);
 
         if(!transferResult.empty())
-            throw ExchangeController::ExchangeControllerException("Issue when transfering money on subaccount" + transferResult.asString());
+            throw ExchangeController::ExchangeControllerException("Issue when transfering money on subaccount" + transferResult.toStyledString());
         
         return Quantity{((accountAmount + AmountNeeded) * percent)/price};
     }
@@ -192,7 +192,7 @@ Quantity GateioController::prepareAccount(const Price& price,const std::optional
         _gateIoAPI.transferSubAnnounts("USDT", GateioController::subAccountId, GateIoCPP::Direction::to, extraAmount , transferResult);
 
         if(!transferResult.empty())
-            throw ExchangeController::ExchangeControllerException("Issue when transfering money on subaccount" + transferResult.asString());
+            throw ExchangeController::ExchangeControllerException("Issue when transfering money on subaccount" + transferResult.toStyledString());
     }
 
     return Quantity{(amountRequired * percent)/price};
