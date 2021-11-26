@@ -69,14 +69,31 @@ TickerResult GateioController::getSpotTicker(const std::string& currencyPair) co
     //CHRONO_THIS_SCOPE;
     GateIoCPP::SpotTickersResult result;
     _gateIoAPI.get_spot_tickers(currencyPair, result);
-
-    return {boost::lexical_cast<double>(result[0]["last"].asString())
-        , boost::lexical_cast<double>(result[0]["high_24h"].asString())
-        , boost::lexical_cast<double>(result[0]["low_24h"].asString())
-        , boost::lexical_cast<double>(result[0]["base_volume"].asString())
-        , boost::lexical_cast<double>(result[0]["quote_volume"].asString())
-        , boost::lexical_cast<double>(result[0]["lowest_ask"].asString())
-        , boost::lexical_cast<double>(result[0]["highest_bid"].asString())};
+    TickerResult tickerResult;
+    try
+    {
+        tickerResult = {boost::lexical_cast<double>(result[0]["last"].asString())
+            , boost::lexical_cast<double>(result[0]["high_24h"].asString())
+            , boost::lexical_cast<double>(result[0]["low_24h"].asString())
+            , boost::lexical_cast<double>(result[0]["base_volume"].asString())
+            , boost::lexical_cast<double>(result[0]["quote_volume"].asString())
+            , boost::lexical_cast<double>(result[0]["lowest_ask"].asString())
+            , boost::lexical_cast<double>(result[0]["highest_bid"].asString())};
+    }
+    catch(std::exception& e)
+    {
+        LOG_ERROR << "std::exception caught: " << e.what();
+        sleep(1); // in case order api limit is reached
+        return {};
+    }
+    catch(...)
+    {
+        LOG_ERROR << "Unknown exception caught";
+        sleep(1);
+        return {};
+    }
+    
+    return tickerResult;
 }
 
 std::string GateioController::getOrderBook(const std::string& currencyPair) const
