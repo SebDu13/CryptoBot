@@ -145,7 +145,7 @@ Quantity GateioController::getSubAccountBalance() const
 
 Quantity GateioController::prepareAccount(const Price& price,const std::optional<Quantity>& maxAmountOpt, const std::optional<Quantity>& quantityOpt) const
 {
-    tools::FixedPoint percent{"0.99"};
+    tools::FixedPoint percent{"0.98"};
     
     Quantity accountAmount = getMainAccountBalance();
     LOG_INFO << "There is " << accountAmount << " USDT on spot account";

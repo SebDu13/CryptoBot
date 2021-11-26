@@ -27,6 +27,7 @@ struct FixedPoint
     bool operator>=(const FixedPoint& other) const{ return value >= other.value; };
     bool operator<=(const FixedPoint& other) const{ return value <= other.value; };
     
+    bool nearZero();
     std::string toString() const;
     std::string toStringExact() const;
 

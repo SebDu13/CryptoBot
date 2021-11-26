@@ -218,7 +218,7 @@ void GateIoCPP::transferSubAnnounts(const std::string& currency
 		return ;
 	}
 
-	if(amount == 0)
+	if(amount.nearZero())
 	{
 		result.clear();
 		return;
