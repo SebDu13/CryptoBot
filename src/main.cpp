@@ -10,6 +10,7 @@
 #include "logger.hpp"
 #include "binacpp.h"
 #include "kucoincpp.hpp"
+#include "HuobiApi.hpp"
 #include "exchangeController/GateioController.hpp"
 #include "exchangeController/KucoinController.hpp"
 #include "exchangeController/ExchangeControllerFactory.hpp"
@@ -38,8 +39,20 @@ int main(int argc, char **argv)
 
 	LOG_INFO << botConfig.toString();
 
-	Bot::BotManager botmanager(botConfig);
-	botmanager.startOnTime();
+	//Bot::BotManager botmanager(botConfig);
+	//botmanager.startOnTime();
+
+
+	/* *** HUOBI *** */
+	Json::Value result;
+	HuobiApi huobiApi("","","");
+	int counter = 0;
+	while(counter < 5000)
+	{
+		counter++;
+		huobiApi.getMexcTicker(botConfig.getPairId(), result);
+		LOG_DEBUG << result;
+	}
 
 	return 0;	
 }

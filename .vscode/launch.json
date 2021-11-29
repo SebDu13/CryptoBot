@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/CryptoBot2",
-            "args": ["--id", "ETH_USDT", "--startTime", "18:10", "--limitPrice", "3000", "--withConsole", "--exchange", "Gateio","--maxAmount","2000"],
+            "args": ["--id", "CHEQ_USDT", "--startTime", "10:00", "--limitPrice", "5", "--withConsole", "--exchange", "Gateio"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],

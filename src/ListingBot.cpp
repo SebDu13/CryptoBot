@@ -87,7 +87,7 @@ void ListingBot::run()
 
     const auto buyPrice = buyOrderResult->fillPrice / buyOrderResult->amount;
     const auto sellPrice = sellOrderResult.fillPrice / sellOrderResult.amount;
-    const auto pnl = sellOrderResult.fillPrice - buyOrderResult->fillPrice - (buyOrderResult->fee * buyPrice) - (sellOrderResult.fee * sellPrice);
+    const auto pnl = sellOrderResult.fillPrice - buyOrderResult->fillPrice - (buyOrderResult->fee * buyPrice) - sellOrderResult.fee;
     LOG_INFO << "Pnl: " << pnl << " USDT, " << (pnl/buyOrderResult->fillPrice) * Quantity("100") << "%."
         << " Buy: " << buyPrice << " USDT."
         << " Sell: " << sellPrice << " USDT."

@@ -9,7 +9,7 @@
 #include <exception>
 #include <chrono>
 
-#include "kucoincpp.hpp"
+#include "HuobiApi.hpp"
 #include "logger.hpp"
 #include "magic_enum.hpp"
 #include "sha.hpp"
@@ -21,7 +21,7 @@
 #include "cct_codec.hpp"
 #include "ssl_sha.hpp"
 
-#define KUCOIN_HOST "https://api.kucoin.com"
+#define HUOBI_HOST "https://api.huobi.pro"
 
 namespace{
 
@@ -54,7 +54,7 @@ size_t curl_cb( void *content, size_t size, size_t nmemb, std::string *buffer )
 
 }
 
-KucoinCPP::KucoinCPP(const std::string &api_key, const std::string &secret_key, const std::string &passPhrase )
+HuobiApi::HuobiApi(const std::string &api_key, const std::string &secret_key, const std::string &passPhrase )
 : curl(curl_easy_init())
 , api_key(api_key)
 , secret_key(secret_key)
@@ -63,18 +63,42 @@ KucoinCPP::KucoinCPP(const std::string &api_key, const std::string &secret_key, 
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 }
 
-KucoinCPP::~KucoinCPP()
+HuobiApi::~HuobiApi()
 {
 	LOG_INFO;
 	cleanup();
 }
 
-void KucoinCPP::cleanup()
+void HuobiApi::cleanup()
 {
 	LOG_INFO;
-	curl_easy_cleanup(KucoinCPP::curl);
+	curl_easy_cleanup(HuobiApi::curl);
 	curl_global_cleanup();
 }
+
+/* TEST WITH MEXC EXCHANGE */
+void HuobiApi::getMexcTicker(const std::string& pairId, SpotTickersResult &json_result) const
+{
+	CHRONO_THIS_SCOPE;
+    getMexcTickersGeneric("/open/api/v2/market/ticker?symbol=" + pairId, json_result);
+}
+
+void HuobiApi::getMexcTickersGeneric(const std::string& url, SpotTickersResult &json_result) const
+{
+	std::string _url("https://www.mexc.com");  
+	_url += url;
+
+	std::string str_result;
+	curl_api( _url, str_result );
+
+	if ( !str_result.empty() ) 
+	{	
+		convertToJson(str_result, json_result);
+	}
+	else
+		LOG_ERROR <<  "Failed to get anything.";
+}
+/* END TEST */  
 
 //Get Ticker
 //{
@@ -87,38 +111,14 @@ void KucoinCPP::cleanup()
 //    "bestAskSize": "1.788",
 //    "time": 1550653727731
 //}
-void KucoinCPP::getTicker(const std::string& pairId, SpotTickersResult &json_result) const
+void HuobiApi::getTicker(const std::string& pairId, SpotTickersResult &json_result) const
 {
-    getTickersGeneric("/api/v1/market/orderbook/level1?symbol=" + pairId, json_result);
+    getTickersGeneric("/market/detail/merged?symbol=" + pairId, json_result);
 }
 
-//Get 24hr Stats
-//{
-//    "time": 1602832092060,  // time
-//    "symbol": "BTC-USDT",   // symbol
-//    "buy": "11328.9",   // bestAsk
-//    "sell": "11329",    // bestBid
-//    "changeRate": "-0.0055",    // 24h change rate
-//    "changePrice": "-63.6", // 24h change price
-//    "high": "11610",    // 24h highest price
-//    "low": "11200", // 24h lowest price
-//    "vol": "2282.70993217", // 24h volume，the aggregated trading volume in BTC
-//    "volValue": "25984946.157790431",   // 24h total, the trading volume in quote currency of last 24 hours
-//    "last": "11328.9",  // last price
-//    "averagePrice": "11360.66065903",   // 24h average transaction price yesterday
-//    "takerFeeRate": "0.001",    // Basic Taker Fee
-//    "makerFeeRate": "0.001",    // Basic Maker Fee
-//    "takerCoefficient": "1",    // Taker Fee Coefficient
-//    "makerCoefficient": "1" // Maker Fee Coefficient
-//}
-void KucoinCPP::get24HrStats(const std::string& pairId, SpotTickersResult &json_result) const
+void HuobiApi::getTickersGeneric(const std::string& url, SpotTickersResult &json_result) const
 {
-    getTickersGeneric("/api/v1/market/stats?symbol=" + pairId, json_result);
-}
-
-void KucoinCPP::getTickersGeneric(const std::string& url, SpotTickersResult &json_result) const
-{
-	std::string _url(KUCOIN_HOST);  
+	std::string _url(HUOBI_HOST);  
 	_url += url;
 
 	std::string str_result;
@@ -140,7 +140,7 @@ void KucoinCPP::getTickersGeneric(const std::string& url, SpotTickersResult &jso
     "code" : "900001",
     "msg" : "Symbol [pouette-USDT] Not Exists"
 }*/
-void KucoinCPP::sendLimitOrder ( 
+void HuobiApi::sendLimitOrder ( 
 	const std::string& currency_pair, 
 	const Side side,
 	const TimeInForce timeInForce,
@@ -157,7 +157,7 @@ void KucoinCPP::sendLimitOrder (
 		return ;
 	}
 
-	std::string url(KUCOIN_HOST);
+	std::string url(HUOBI_HOST);
 	std::string prefix("/api/v1/orders");
 	url += prefix;
 
@@ -189,7 +189,7 @@ void KucoinCPP::sendLimitOrder (
 		LOG_ERROR << "Failed to get anything.";
 }
 
-void KucoinCPP::getOrder ( 
+void HuobiApi::getOrder ( 
 	const std::string& orderId,
 	Json::Value &json_result ) const
 {
@@ -201,7 +201,7 @@ void KucoinCPP::getOrder (
 		return ;
 	}
 
-	std::string url(KUCOIN_HOST);
+	std::string url(HUOBI_HOST);
 	std::string prefix("/api/v1/orders/" + orderId);
 	url += prefix;
 	
@@ -221,7 +221,7 @@ void KucoinCPP::getOrder (
 		LOG_ERROR << "Failed to get anything.";
 }
 
-void KucoinCPP::getAccountBalances(Json::Value &json_result) const
+void HuobiApi::getAccountBalances(Json::Value &json_result) const
 {
 	if ( api_key.size() == 0 || secret_key.size() == 0 )
 	{
@@ -229,7 +229,7 @@ void KucoinCPP::getAccountBalances(Json::Value &json_result) const
 		return ;
 	}
 
-	std::string url(KUCOIN_HOST);
+	std::string url(HUOBI_HOST);
 	std::string prefix("/api/v1/accounts");
 	url += prefix;
 	
@@ -249,12 +249,12 @@ void KucoinCPP::getAccountBalances(Json::Value &json_result) const
 		LOG_ERROR << "Failed to get anything.";
 }
 
-void KucoinCPP::curl_api( std::string &url, std::string &result_json ) const
+void HuobiApi::curl_api( std::string &url, std::string &result_json ) const
 {
 	curl_api_with_header( url , {}, "" , "GET", result_json );	
 }
 
-std::vector <std::string> KucoinCPP::generateSignedHttpHeader(const std::string& action, const std::string& prefix, const std::string& body) const
+std::vector <std::string> HuobiApi::generateSignedHttpHeader(const std::string& action, const std::string& prefix, const std::string& body) const
 {
 	using namespace cct;
 
@@ -274,7 +274,7 @@ std::vector <std::string> KucoinCPP::generateSignedHttpHeader(const std::string&
 		,"Content-Type: application/json"};
 }
 
-void KucoinCPP::curl_api_with_header(const std::string &url
+void HuobiApi::curl_api_with_header(const std::string &url
 			,const std::vector <std::string> &extra_http_header
 			,const std::string &post_data
 			,const std::string &action
@@ -299,16 +299,16 @@ void KucoinCPP::curl_api_with_header(const std::string &url
 			{
 				chunk = curl_slist_append(chunk, extra_http_header[i].c_str() );
 			}
-			curl_easy_setopt(KucoinCPP::curl, CURLOPT_HTTPHEADER, chunk);
+			curl_easy_setopt(HuobiApi::curl, CURLOPT_HTTPHEADER, chunk);
 		}
 
 		if ( action == "PUT" || action == "DELETE" ) 
-			curl_easy_setopt(KucoinCPP::curl, CURLOPT_CUSTOMREQUEST, action.c_str() );
+			curl_easy_setopt(HuobiApi::curl, CURLOPT_CUSTOMREQUEST, action.c_str() );
 
 		if(!post_data.empty() || action == "POST")
-			curl_easy_setopt(KucoinCPP::curl, CURLOPT_POSTFIELDS, post_data.c_str() );
+			curl_easy_setopt(HuobiApi::curl, CURLOPT_POSTFIELDS, post_data.c_str() );
 
-		res = curl_easy_perform(KucoinCPP::curl);
+		res = curl_easy_perform(HuobiApi::curl);
 		curl_easy_reset(curl); // reset the options
 
 		/* Check for errors */ 
