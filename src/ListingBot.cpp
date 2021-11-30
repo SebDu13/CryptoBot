@@ -44,8 +44,9 @@ void ListingBot::notifyStop()
         *_stopFlag = true;
 }
 
-void ListingBot::run()
+ListingBotStatus ListingBot::run()
 {
+    ListingBotStatus status;
     std::optional<ExchangeController::OrderResult> buyOrderResult;
 
     if(_runningMode == RunningMode::WatchAndSell)
@@ -61,12 +62,12 @@ void ListingBot::run()
         // Wait
         buyOrderResult = buySync();
         if(!buyOrderResult)
-            return;
+            return status;
 
         if(buyOrderResult->status != ExchangeController::OrderStatus::Closed)
         {
             LOG_ERROR << "Cannot buy " << _pairId << " because buyOrderResult.status=" << magic_enum::enum_name(buyOrderResult->status);
-            return;
+            return status;
         }
     }
 
@@ -82,26 +83,25 @@ void ListingBot::run()
         LOG_ERROR << "Cannot sell " << _pairId 
             << " because buyOrderResult.status=" << magic_enum::enum_name(sellOrderResult.status) 
             << " *** POSITION IS OPEN ***";
-        return;
+        status.status = ListingBotStatus::Status::OpenPosition;
+        return status;
     }
 
-    const auto buyPrice = buyOrderResult->fillPrice / buyOrderResult->amount;
-    const auto sellPrice = sellOrderResult.fillPrice / sellOrderResult.amount;
-    const auto pnl = sellOrderResult.fillPrice - buyOrderResult->fillPrice - (buyOrderResult->fee * buyPrice) - sellOrderResult.fee;
-    LOG_INFO << "Pnl: " << pnl << " USDT, " << (pnl/buyOrderResult->fillPrice) * Quantity("100") << "%."
-        << " Buy: " << buyPrice << " USDT."
-        << " Sell: " << sellPrice << " USDT."
-        << " Amount invested: " << buyOrderResult->fillPrice << " USDT.";
-
+    status.buyPrice = buyOrderResult->fillPrice / buyOrderResult->amount;
+    status.sellPrice = sellOrderResult.fillPrice / sellOrderResult.amount;
+    status.pnl = sellOrderResult.fillPrice - buyOrderResult->fillPrice - (buyOrderResult->fee * status.buyPrice) - sellOrderResult.fee;
+    status.amount =  buyOrderResult->fillPrice;
+    status.status = ListingBotStatus::Status::Ok;
+    return status;
 }
 
-void ListingBot::runAsync(std::atomic<bool>* stopFlag)
+void ListingBot::runAsync(std::atomic<bool>* stopFlag, std::promise<ListingBotStatus> promise)
 {
     _stopFlag = stopFlag;
-    _thread = std::thread([this](){
+    _thread = std::thread([this](std::promise<ListingBotStatus> promise){
         LOG_INFO << "Running asynchronously...";
-        this->run();
-    });
+        promise.set_value(this->run());
+    }, std::move(promise));
 }
 
 std::optional<ExchangeController::OrderResult> ListingBot::buySync()

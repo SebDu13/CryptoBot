@@ -1,7 +1,9 @@
 #pragma once
+#include <algorithm>
 #include <string>
 #include "LinearExtrapoler.hpp"
 #include "FixedPoint.hpp"
+#include "magic_enum.hpp"
 
 namespace Bot
 {
@@ -39,6 +41,11 @@ struct TimeThresholdConfig
     TimeThreshold lowBound, highBound;
 };
 
+struct MailConfig
+{
+    std::string mailServer, login, password, from, to;
+};
+
 enum class Exchange
 {
     Gateio,
@@ -50,6 +57,38 @@ enum class Status
     Success,
     Failure
 };
+
+struct ListingBotStatus
+{
+    enum class Status
+    {
+        Aborted,
+        Ok,
+        OpenPosition
+    };
+
+    Status status = Status::Aborted;
+    Quantity pnl = 0, buyPrice = 0, sellPrice = 0, amount = 0;
+
+    ListingBotStatus operator+(const ListingBotStatus &other ) const
+    {
+        return { .status = std::max(this->status, other.status)
+                , .pnl = this->pnl + other.pnl
+                , .buyPrice = this->buyPrice + other.buyPrice
+                , .sellPrice = this->sellPrice + other.sellPrice
+                , .amount = this->amount + other.amount};
+    };
+
+    ListingBotStatus& operator+=(const ListingBotStatus &other )
+    {
+        *this = *this + other;
+        return *this;
+    }
+    std::string str();
+    friend std::ostream& operator<<(std::ostream& os, const ListingBotStatus& other);
+};
+
+std::ostream& operator<<(std::ostream& os, const ListingBotStatus& status);
 
 struct ApiKeys
 {

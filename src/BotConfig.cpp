@@ -219,8 +219,8 @@ TimeThresholdConfig BotConfig::getTimeThresholdConfig() const
     {
         lowBound.profit = 1.05;
         lowBound.timeSec=12;
-        highBound.profit = 1.6;
-        highBound.timeSec=3;
+        highBound.profit = 1.5;
+        highBound.timeSec=1;
         thresholdPercent=0.05;
     }
     else
@@ -228,7 +228,7 @@ TimeThresholdConfig BotConfig::getTimeThresholdConfig() const
         lowBound.profit = 1.05;
         lowBound.timeSec=10;
         highBound.profit = 1.2;
-        highBound.timeSec=3;
+        highBound.timeSec=1;
         thresholdPercent=0.1;
     }
     return {.priceThresholdPercent=thresholdPercent, .lowBound = lowBound, .highBound = highBound};
@@ -240,7 +240,7 @@ PriceThresholdConfig BotConfig::getPriceThresholdConfig() const
     if(_greedyMode)
     {
         lowBound.profit = 1.2;
-        lowBound.lossThreshold=0.75;
+        lowBound.lossThreshold=0.8;
         highBound.profit = 2;
         highBound.lossThreshold=0.9;
     }
@@ -296,6 +296,29 @@ unsigned int BotConfig::getDelayBetweenBotsSpawnUs() const
         default:
         return 500;
     }
+}
+
+MailConfig BotConfig::getMailConfig() const
+{
+    MailConfig mailConfig;
+    std::string mailLoginEnv = "MAIL_LOGIN";
+    std::string mailPassWordEnv = "MAIL_PASSWORD";
+
+    if(auto key = std::getenv(mailLoginEnv.c_str()))
+        mailConfig.login = std::string(key);
+    else
+        LOG_WARNING << mailLoginEnv << " not set or null";
+
+    if(auto key = std::getenv(mailPassWordEnv.c_str()))
+        mailConfig.password = std::string(key);
+    else
+        LOG_WARNING << mailPassWordEnv << " not set or null";
+
+    mailConfig.mailServer = "smtp.live.com";
+    mailConfig.from  = "<seb.crypto@hotmail.com>";
+    mailConfig.to = "<sebastien.suignard@hotmail.fr>";
+
+    return mailConfig;
 }
 
 }

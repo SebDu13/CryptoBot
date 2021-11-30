@@ -5,6 +5,7 @@
 #include "ListingBot.hpp"
 #include <atomic>
 #include <string>
+#include <future>
 
 namespace Bot{
 
@@ -22,7 +23,6 @@ class BotManager
     const unsigned int _extraDurationMs;
     const unsigned int _delayBetweenSpawn;
     const std::string _openingTime;
-    std::vector<std::unique_ptr<ListingBot>> _listingBots;
     std::chrono::system_clock::time_point _startTime;
     std::atomic<bool> _stopFlag = false;
 

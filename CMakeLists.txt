@@ -20,8 +20,8 @@ set(GATEIO_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/gateiocpp/)
 set(GATEIO_INCLUDE_DIR ${GATEIO_LIB_DIR}/include)
 set(KUCOIN_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/kucoincpp/)
 set(KUCOIN_INCLUDE_DIR ${KUCOIN_LIB_DIR}/include)
-set(KUCOINAPI_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/kucoinapi/)
-set(KUCOINAPI_INCLUDE_DIR ${KUCOINAPI_LIB_DIR}/include)
+set(HUOBI_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/huobiApi/)
+set(HUOBI_INCLUDE_DIR ${HUOBI_LIB_DIR}/include)
 set(JSONCPP_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/jsoncpp-1.8.3/)
 set(JSONCPP_INCLUDE_DIR ${JSONCPP_LIB_DIR}/include)
 set(TOOLS_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/tools/)
@@ -69,13 +69,13 @@ add_library(
 	${KUCOIN_SOURCES}
 )
 
-#file(GLOB KUCOINAPI_SOURCES CONFIGURE_DEPENDS ${KUCOINAPI_LIB_DIR}/src/*.cpp)
-#file(GLOB KUCOINAPI_HEADERS CONFIGURE_DEPENDS ${KUCOINAPI_LIB_DIR}/include/*.hpp)
-#add_library(
-#	kucoinapi
-#	${KUCOINAPI_HEADERS}
-#	${KUCOINAPI_SOURCES}
-#)
+file(GLOB HUOBI_SOURCES CONFIGURE_DEPENDS ${HUOBI_LIB_DIR}/src/*.cpp)
+file(GLOB HUOBI_HEADERS CONFIGURE_DEPENDS ${HUOBI_LIB_DIR}/include/*.h)
+add_library(
+	huobi
+	${HUOBI_HEADERS}
+	${HUOBI_SOURCES}
+)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -84,7 +84,7 @@ include_directories(
   ${BINANCE_INCLUDE_DIR}
   ${GATEIO_INCLUDE_DIR}
   ${KUCOIN_INCLUDE_DIR}
-  #${KUCOINAPI_INCLUDE_DIR}
+  ${HUOBI_INCLUDE_DIR}
   ${Boost_INCLUDE_DIR}
   ${AMC_INCLUDE_DIR}
 )
@@ -103,6 +103,7 @@ target_link_libraries (
 	binance
 	gateio
 	kucoin
+	huobi
 	tools
 	curl
 	OpenSSL::Crypto

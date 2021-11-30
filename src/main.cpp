@@ -39,12 +39,12 @@ int main(int argc, char **argv)
 
 	LOG_INFO << botConfig.toString();
 
-	//Bot::BotManager botmanager(botConfig);
-	//botmanager.startOnTime();
+	Bot::BotManager botmanager(botConfig);
+	botmanager.startOnTime();
 
 
 	/* *** HUOBI *** */
-	Json::Value result;
+	/*Json::Value result;
 	HuobiApi huobiApi("","","");
 	int counter = 0;
 	while(counter < 5000)
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 		counter++;
 		huobiApi.getMexcTicker(botConfig.getPairId(), result);
 		LOG_DEBUG << result;
-	}
+	}*/
 
 	return 0;	
 }

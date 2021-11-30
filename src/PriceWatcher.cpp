@@ -24,7 +24,7 @@ bool PriceWatcher::isMoving(double price, double profit)
     }
     
     const double movePercent = abs(price - _previousPrice)/_previousPrice;
-    if(movePercent > _thresholdPercent)
+    if(price > _previousPrice && movePercent > _thresholdPercent)
     {
         _startTime = std::chrono::high_resolution_clock::now();
         LOG_DEBUG << "movePercent=" << movePercent << " reset timer. price=" << price << " _previousPrice=" << _previousPrice;

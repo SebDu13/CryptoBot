@@ -26,6 +26,7 @@ namespace Bot
         unsigned int getThreadNumber() const;
         unsigned int getDurationBeforeStartMs() const;
         unsigned int getDelayBetweenBotsSpawnUs() const;
+        MailConfig getMailConfig() const;
 
         private:
         std::string _pairId = "";

@@ -1,6 +1,7 @@
 #include "BotManager.hpp"
 #include "logger.hpp"
 #include "exchangeController/ExchangeControllerFactory.hpp"
+#include "mail.hpp"
 
 namespace Bot{
 
@@ -42,6 +43,12 @@ BotManager::~BotManager()
 
 void BotManager::startOnTime()
 {
+    auto mailConfig = _config.getMailConfig();
+	tools::Mail mail({mailConfig.mailServer, mailConfig.login, mailConfig.password});
+	
+    std::vector<std::unique_ptr<ListingBot>> listingBots;
+    std::vector<std::future<ListingBotStatus>> statusFutures;
+
     using namespace std::chrono;
     if(_startTime <= high_resolution_clock::now())
     {
@@ -50,7 +57,7 @@ void BotManager::startOnTime()
     }
  
     for(auto i = 0; i< _botNumber; ++i)
-        _listingBots.emplace_back(std::make_unique<ListingBot>(_config, _quantity));
+        listingBots.emplace_back(std::make_unique<ListingBot>(_config, _quantity));
 
     LOG_INFO << _botNumber << " bots built. Wait for opening..." << _openingTime;
 
@@ -58,12 +65,29 @@ void BotManager::startOnTime()
 
     LOG_INFO << "Starting bots...";
 
-    for(std::unique_ptr<ListingBot>& bot: _listingBots)
+    for(std::unique_ptr<ListingBot>& bot: listingBots)
     {
         if(bot)
-            bot->runAsync(&_stopFlag);
+        {
+            std::promise<ListingBotStatus> promiseStatus;
+            statusFutures.emplace_back(promiseStatus.get_future());
+            bot->runAsync(&_stopFlag, std::move(promiseStatus));
+        }
         usleep(_delayBetweenSpawn);
     }
+
+    ListingBotStatus botsStatus;
+    // wait that all bots have finished
+    for(auto& future : statusFutures)
+        botsStatus += future.get();
+    
+    LOG_INFO << botsStatus;
+
+    mail.sendmail(mailConfig.from
+        , mailConfig.to
+        , std::string(magic_enum::enum_name(_config.getExchange())) + " --> "
+            + _config.getPairId() + " "
+            + botsStatus.str());
 }
 
 void BotManager::wait()

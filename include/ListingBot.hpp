@@ -3,6 +3,7 @@
 #include <memory>
 #include <thread>
 #include <atomic>
+#include <future>
 #include "exchangeController/AbstractExchangeController.hpp"
 #include "BotType.hpp"
 #include "BotConfig.hpp"
@@ -23,8 +24,8 @@ class ListingBot
     ListingBot(const BotConfig& botconfig, Quantity quantity);
         
     virtual ~ListingBot();
-    void run();
-    void runAsync(std::atomic<bool>* stopFlag);
+    ListingBotStatus run();
+    void runAsync(std::atomic<bool>* stopFlag, std::promise<ListingBotStatus> promise);
     void justBuy();
     void watch() const;
     void runWithoutMonitoring(const std::string& pairId);
