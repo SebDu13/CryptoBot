@@ -65,13 +65,11 @@ KucoinCPP::KucoinCPP(const std::string &api_key, const std::string &secret_key, 
 
 KucoinCPP::~KucoinCPP()
 {
-	LOG_INFO;
 	cleanup();
 }
 
 void KucoinCPP::cleanup()
 {
-	LOG_INFO;
 	curl_easy_cleanup(KucoinCPP::curl);
 	curl_global_cleanup();
 }
@@ -165,11 +163,19 @@ void KucoinCPP::sendLimitOrder (
 	bodyJson["clientOid"] = std::to_string(duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
 	bodyJson["side"] = std::string(magic_enum::enum_name(side));
 	bodyJson["symbol"] = currency_pair;
-	bodyJson["type"] = "limit";
 	bodyJson["stp"] = "CO";
-	bodyJson["price"] = price.toString();
-	bodyJson["size"] = quantity.toString();
-	bodyJson["timeInForce"] = std::string(magic_enum::enum_name(timeInForce));
+	if(side == Side::sell)
+	{
+		bodyJson["type"] = "limit";
+		bodyJson["price"] = price.toString();
+		bodyJson["size"] = quantity.toString();
+		bodyJson["timeInForce"] = std::string(magic_enum::enum_name(timeInForce));
+	}
+	else if(side == Side::buy)
+	{
+		bodyJson["type"] = "market";
+		bodyJson["funds"] = (price * quantity).toString();
+	}
 
 	std::string body = bodyJson.toStyledString();
 

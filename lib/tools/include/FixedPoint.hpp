@@ -7,8 +7,7 @@ namespace tools{
 struct FixedPoint
 {
     using ValueType = boost::multiprecision::cpp_dec_float_50;
-    //using ValueType = boost::multiprecision::number<cpp_dec_float<50> >;
-
+    static inline size_t minPrecision = 4;
 
     explicit FixedPoint():value(0) {} ;
     explicit FixedPoint(std::string str):value(str) {} ;

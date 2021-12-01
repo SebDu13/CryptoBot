@@ -3,6 +3,7 @@
 #include "logger.hpp"
 #include "magic_enum.hpp"
 #include <regex>
+#include "FixedPoint.hpp"
 
 namespace{
 
@@ -155,6 +156,7 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
         }
     }
 
+    setFixedPointPrecision();
     convertCurrencyPair(_pairId, _exchange);
     return Status::Success;
 }
@@ -298,6 +300,20 @@ unsigned int BotConfig::getDelayBetweenBotsSpawnUs() const
     }
 }
 
+void BotConfig::setFixedPointPrecision() const
+{
+    switch(_exchange)
+    {
+        case Exchange::Kucoin:
+            tools::FixedPoint::minPrecision = 3;
+            break;
+
+        default:
+            tools::FixedPoint::minPrecision = 4;
+            break;
+    }
+}
+
 MailConfig BotConfig::getMailConfig() const
 {
     MailConfig mailConfig;
@@ -314,8 +330,8 @@ MailConfig BotConfig::getMailConfig() const
     else
         LOG_WARNING << mailPassWordEnv << " not set or null";
 
-    mailConfig.mailServer = "smtp.live.com";
-    mailConfig.from  = "<seb.crypto@hotmail.com>";
+    mailConfig.mailServer = "smtp.gmail.com";
+    mailConfig.from  = "<sebcrypto57@gmail.com>";
     mailConfig.to = "<sebastien.suignard@hotmail.fr>";
 
     return mailConfig;

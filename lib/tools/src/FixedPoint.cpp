@@ -29,7 +29,7 @@ std::ostream& operator<<(std::ostream& os, const FixedPoint& other)
 std::string FixedPoint::toString() const
 { 
     std::ostringstream os;
-    os << setPrecision(4, toStringExact());
+    os << setPrecision(minPrecision, toStringExact());
     return os.str();
 };
 

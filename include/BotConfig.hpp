@@ -38,5 +38,7 @@ namespace Bot
         std::optional<Quantity> _maxAmount = std::nullopt;
         std::string _startTime ="";
         RunningMode _runningMode = RunningMode::Normal;
+        
+        void setFixedPointPrecision() const;
     };
 }
