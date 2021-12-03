@@ -164,18 +164,10 @@ void KucoinCPP::sendLimitOrder (
 	bodyJson["side"] = std::string(magic_enum::enum_name(side));
 	bodyJson["symbol"] = currency_pair;
 	bodyJson["stp"] = "CO";
-	if(side == Side::sell)
-	{
-		bodyJson["type"] = "limit";
-		bodyJson["price"] = price.toString();
-		bodyJson["size"] = quantity.toString();
-		bodyJson["timeInForce"] = std::string(magic_enum::enum_name(timeInForce));
-	}
-	else if(side == Side::buy)
-	{
-		bodyJson["type"] = "market";
-		bodyJson["funds"] = (price * quantity).toString();
-	}
+	bodyJson["type"] = "limit";
+	bodyJson["price"] = price.toString();
+	bodyJson["size"] = quantity.toString();
+	bodyJson["timeInForce"] = std::string(magic_enum::enum_name(timeInForce));
 
 	std::string body = bodyJson.toStyledString();
 

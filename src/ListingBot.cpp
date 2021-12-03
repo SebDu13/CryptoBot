@@ -146,6 +146,10 @@ void ListingBot::shouldSellSync(const ExchangeController::OrderResult& buyOrderR
     while(!tools::kbhit())
     {
         const ExchangeController::TickerResult tickerResult = _exchangeController->getSpotTicker(_pairId);
+
+        if(tickerResult.high24h == 0 || tickerResult.last == 0)
+            continue;
+
         const double profit = tickerResult.high24h/(double)purchasePrice;
         const double lossThreshold = priceThreasholdExtrapoler.extrapolate(profit);
 
@@ -158,9 +162,6 @@ void ListingBot::shouldSellSync(const ExchangeController::OrderResult& buyOrderR
             //LOG_INFO << "OrderBook: " << _exchangeController->getOrderBook(_pairId);
             previousTickerResult = tickerResult;
         }
-
-        if(tickerResult.high24h == 0 || tickerResult.last == 0)
-            continue;
 
         if(tickerResult.last < (tickerResult.high24h * lossThreshold))
         {
