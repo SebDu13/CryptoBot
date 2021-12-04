@@ -4,6 +4,7 @@
 #include "magic_enum.hpp"
 #include <regex>
 #include "FixedPoint.hpp"
+#include<cmath>
 
 namespace{
 
@@ -60,7 +61,7 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
     ("limitPrice", po::value<std::string>(), "Set limit price. Put a large price to have more chance to be executed")
     ("quantity", po::value<std::string>(), "Set quantity. If not set, it will use the total amount available on the wallet")
     ("withConsole", "Send logs on console")
-    ("greedy", "Duration used to sell if the the price doesn't move and price thresholds are more permissive.")
+    ("firstListing", "More permissive threasholds and way bigger limitBuyPrice")
     ("exchange", po::value<std::string>(), printExchanges().c_str())
     ("maxAmount", po::value<std::string>(), "Max amount to trade (in USDT)")
     ("startTime", po::value<std::string>(), "Start token listing time. hh:mm UTC")
@@ -100,8 +101,8 @@ Status BotConfig::loadOptionsFromMain(int argc, char **argv)
     else
         LOG_INFO << "withConsole was set to " << false;
     
-    if (vm.count("greedy")) 
-        _greedyMode = true;
+    if (vm.count("firstListing")) 
+        _firstListingMode = true;
 
     if (vm.count("exchange"))
     {
@@ -206,7 +207,7 @@ std::string BotConfig::toString() const
     stream << "limitBuyPrice=" << _limitBuyPrice.value << std::endl;
     if(_quantity) stream << "quantity=" << _quantity->toString() << std::endl;
     stream << "withConsole=" << _withConsole << std::endl;
-    stream << "greedy=" << _greedyMode << std::endl;
+    stream << "firstListing=" << _firstListingMode << std::endl;
     if(_maxAmount) stream << "maxAmount=" << *_maxAmount << std::endl;
     stream << "runningMode=" << magic_enum::enum_name(_runningMode) << std::endl;
 
@@ -217,7 +218,7 @@ TimeThresholdConfig BotConfig::getTimeThresholdConfig() const
 {
     TimeThreshold lowBound, highBound;
     double thresholdPercent;
-    if(_greedyMode)
+    if(_firstListingMode)
     {
         lowBound.profit = 1.05;
         lowBound.timeSec=12;
@@ -239,7 +240,7 @@ TimeThresholdConfig BotConfig::getTimeThresholdConfig() const
 PriceThresholdConfig BotConfig::getPriceThresholdConfig() const
 {   
     PriceThreshold lowBound, highBound;
-    if(_greedyMode)
+    if(_firstListingMode)
     {
         lowBound.profit = 1.2;
         lowBound.lossThreshold=0.8;
@@ -277,7 +278,7 @@ unsigned int BotConfig::getDurationBeforeStartMs() const
     if(_runningMode == RunningMode::WatchAndSell)
         return 0;
 
-    const int defaultValue = 50; // milliseconds
+    const int defaultValue = 2; // milliseconds
     switch(_exchange)
     {
         case Exchange::Kucoin:
@@ -296,7 +297,10 @@ unsigned int BotConfig::getDelayBetweenBotsSpawnUs() const
         return 10000; // 10ms
 
         default:
-        return 500;
+        if(_firstListingMode)
+            return 4500; //4.5ms
+        else
+            return 500;
     }
 }
 
@@ -335,6 +339,24 @@ MailConfig BotConfig::getMailConfig() const
     mailConfig.to = "<sebastien.suignard@hotmail.fr>";
 
     return mailConfig;
+}
+
+std::vector<Price> BotConfig::computeLimitBuyPrices() const
+{
+    auto threadNumber = getThreadNumber();
+    if(!_firstListingMode)
+        return std::vector<Price>(threadNumber, _limitBuyPrice);
+    
+    const Quantity maxFactor("16"); // for first world listing  we want to enter at public sale price * 16 at the maximum
+    const Quantity step(std::to_string(pow(static_cast<double>(maxFactor), 1/static_cast<double>(threadNumber)))); // step in percent
+    std::vector<Price> limitPrices;
+    
+    limitPrices.reserve(threadNumber);
+    limitPrices.emplace_back(step * _limitBuyPrice);
+    for(size_t i = 1; i < threadNumber; ++i)
+        limitPrices.emplace_back(limitPrices.back() * step);
+    
+    return limitPrices;
 }
 
 }

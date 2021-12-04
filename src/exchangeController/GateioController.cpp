@@ -109,7 +109,7 @@ OrderResult GateioController::sendOrder(const std::string& currencyPair, const S
     _gateIoAPI.send_limit_order(currencyPair, convertFrom(side), GateIoCPP::TimeInForce::ioc, quantity, price, result);
     const auto& status = fillOrderStatus(result);
     
-    LOG_DEBUG << result;
+    LOG_DEBUG << "Response: " << result;
         
     if( status == OrderStatus::Closed || status == OrderStatus::Cancelled)
         return {status
@@ -121,7 +121,7 @@ OrderResult GateioController::sendOrder(const std::string& currencyPair, const S
         return {status, Quantity(), Quantity(), Quantity(), Quantity()};
 }
 
-Quantity GateioController::computeMaxQuantity(const Price& price) const
+Quantity GateioController::computeMaxAmount(const Price& price) const
 {
     Json::Value result;
     _gateIoAPI.getAccountBalance(result);
@@ -136,7 +136,7 @@ Quantity GateioController::computeMaxQuantity(const Price& price) const
         LOG_INFO << "There is " << quantity << " USDT on spot account";
         const tools::FixedPoint percent("0.97");
 
-        return Quantity{(quantity * percent)/price};
+        return Quantity{(quantity * percent)};
     }
 
     return Quantity{};
@@ -178,7 +178,7 @@ Quantity GateioController::prepareAccount(const Price& price,const std::optional
         if(!transferResult.empty())
             throw ExchangeController::ExchangeControllerException("Issue when transfering money on subaccount" + transferResult.toStyledString());
 
-        return Quantity{((accountAmount + subAccountAmount) * percent)/price};
+        return Quantity{(accountAmount + subAccountAmount) * percent};
     }
 
     Quantity quantity = quantityOpt.value_or(0);
@@ -199,7 +199,7 @@ Quantity GateioController::prepareAccount(const Price& price,const std::optional
         if(!transferResult.empty())
             throw ExchangeController::ExchangeControllerException("Issue when transfering money on subaccount" + transferResult.toStyledString());
         
-        return Quantity{((accountAmount + AmountNeeded) * percent)/price};
+        return Quantity{(accountAmount + AmountNeeded) * percent};
     }
     // Too much on main account
     else if(Quantity extraAmount = accountAmount - amountRequired; extraAmount > 0)
@@ -212,7 +212,7 @@ Quantity GateioController::prepareAccount(const Price& price,const std::optional
             throw ExchangeController::ExchangeControllerException("Issue when transfering money on subaccount" + transferResult.toStyledString());
     }
 
-    return Quantity{(amountRequired * percent)/price};
+    return Quantity{amountRequired * percent};
 }
 
 Quantity GateioController::getMinOrderSize() const

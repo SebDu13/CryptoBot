@@ -11,15 +11,19 @@
 namespace Bot
 {
 
-ListingBot::ListingBot(const BotConfig& botConfig, Quantity quantity)
+ListingBot::ListingBot(const BotConfig& botConfig, Quantity quantity, Price limiteBuyPrice, std::atomic<bool>* stopFlag, std::promise<ListingBotStatus> promise)
 : _exchangeController(ExchangeController::ExchangeControllerFactory::create(botConfig))
 , _pairId(botConfig.getPairId())
-, _limitBuyPrice(botConfig.getLimitBuyPrice())
+, _limitBuyPrice(limiteBuyPrice)
 , _quantity(quantity)
 , _priceThresholdConfig(botConfig.getPriceThresholdConfig())
 , _timeThreasholdConfig(botConfig.getTimeThresholdConfig())
 , _runningMode(botConfig.getMode())
+, _stopFlag(stopFlag)
 {
+    _thread = std::thread([this](std::promise<ListingBotStatus> promise){
+        promise.set_value(this->run());
+    }, std::move(promise));
 }
 
 ListingBot::~ListingBot()
@@ -48,6 +52,12 @@ ListingBotStatus ListingBot::run()
 {
     ListingBotStatus status;
     std::optional<ExchangeController::OrderResult> buyOrderResult;
+
+    while(!_startFlag)
+    {
+        usleep(50);
+    }
+    LOG_INFO << "Running asynchronously... limit buy price=" << _limitBuyPrice << ",  quantity=" << _quantity << " ...";
 
     if(_runningMode == RunningMode::WatchAndSell)
     {
@@ -95,13 +105,9 @@ ListingBotStatus ListingBot::run()
     return status;
 }
 
-void ListingBot::runAsync(std::atomic<bool>* stopFlag, std::promise<ListingBotStatus> promise)
+void ListingBot::runAsync()
 {
-    _stopFlag = stopFlag;
-    _thread = std::thread([this](std::promise<ListingBotStatus> promise){
-        LOG_INFO << "Running asynchronously...";
-        promise.set_value(this->run());
-    }, std::move(promise));
+    _startFlag = true;
 }
 
 std::optional<ExchangeController::OrderResult> ListingBot::buySync()
@@ -128,13 +134,6 @@ std::optional<ExchangeController::OrderResult> ListingBot::buySync()
 
     return buyOrderResult;
 }
-
-void  ListingBot::justBuy()
-{
-    LOG_INFO;
-    _exchangeController->sendOrder(_pairId, ExchangeController::Side::buy , _quantity, _limitBuyPrice);
-}
-
 
 void ListingBot::shouldSellSync(const ExchangeController::OrderResult& buyOrderResult) const
 {

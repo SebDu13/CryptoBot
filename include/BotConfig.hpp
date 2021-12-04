@@ -13,6 +13,7 @@ namespace Bot
 
         std::string getPairId() const {return _pairId;};
         Price getLimitBuyPrice() const {return _limitBuyPrice;};
+        std::vector<Price> computeLimitBuyPrices() const;
         std::optional<Quantity> getQuantity() const {return _quantity;};
         ApiKeys getApiKeys() const;
         bool getWithConsole() const {return _withConsole;};
@@ -33,7 +34,7 @@ namespace Bot
         Price _limitBuyPrice = Price(); // generally large
         std::optional<Quantity> _quantity = std::nullopt;
         bool _withConsole = false;
-        bool _greedyMode = false; // good for token not listed on any exchange
+        bool _firstListingMode = false; // good for token not listed on any exchange
         Exchange _exchange;
         std::optional<Quantity> _maxAmount = std::nullopt;
         std::string _startTime ="";

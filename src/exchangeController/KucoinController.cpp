@@ -66,8 +66,11 @@ TickerResult KucoinController::getSpotTicker(const std::string& currencyPair) co
         || result.get("data", Json::Value()).empty() 
         || result["code"] != "200000")
     {
-        if(++failureCount > 3)
+        if(++failureCount > 10)
             throw ExchangeControllerException("KucoinController::getSpotTicker cannot get Ticker *** POSITION IS OPEN ***");
+        
+        LOG_ERROR << "Issue with ticker: " << result;
+        sleep(1);
         return {};
     }
     failureCount = 0;
@@ -139,37 +142,37 @@ OrderResult KucoinController::sendOrder(const std::string& currencyPair, const S
     , Quantity(std::move(fee)) };
 }
 
-    Quantity KucoinController::computeMaxQuantity(const Price& price) const
+Quantity KucoinController::computeMaxAmount(const Price& price) const
+{
+    Json::Value result;
+    _kucoinAPI.getAccountBalances(result);
+    for(const auto& account : result["data"])
     {
-        Json::Value result;
-        _kucoinAPI.getAccountBalances(result);
-        for(const auto& account : result["data"])
+        if(account["currency"] == "USDT")
         {
-            if(account["currency"] == "USDT")
-            {
-                Quantity quantity(account["available"].asString());
-                const tools::FixedPoint percent("0.97");
+            Quantity quantity(account["available"].asString());
+            const tools::FixedPoint percent("0.97");
 
-                return Quantity{(quantity * percent)/price};
-            }
+            return Quantity{(quantity * percent)};
         }
-        LOG_DEBUG << result;
-        return Quantity();
     }
+    LOG_DEBUG << result;
+    return Quantity();
+}
 
-    Quantity KucoinController::prepareAccount(const Price& price,const std::optional<Quantity>& maxAmount, const std::optional<Quantity>& quantity) const
-    {
-        return computeMaxQuantity(price); // account transfer to do
-    }
+Quantity KucoinController::prepareAccount(const Price& price,const std::optional<Quantity>& maxAmount, const std::optional<Quantity>& quantity) const
+{
+    return computeMaxAmount(price); // account transfer to do
+}
 
-    Quantity KucoinController::getMinOrderSize() const
-    {
-        return Quantity{"1"};
-    }
+Quantity KucoinController::getMinOrderSize() const
+{
+    return Quantity{"1"};
+}
 
-    Quantity KucoinController::getAmountLeft(const OrderResult& buyOrderResult) const
-    {
-        return buyOrderResult.amount;
-    }
+Quantity KucoinController::getAmountLeft(const OrderResult& buyOrderResult) const
+{
+    return buyOrderResult.amount;
+}
 
 }

@@ -21,12 +21,10 @@ namespace Bot
 class ListingBot
 {
     public:
-    ListingBot(const BotConfig& botconfig, Quantity quantity);
+    ListingBot(const BotConfig& botConfig, Quantity quantity, Price limiteBuyPrice, std::atomic<bool>* stopFlag, std::promise<ListingBotStatus> promise);
         
     virtual ~ListingBot();
-    ListingBotStatus run();
-    void runAsync(std::atomic<bool>* stopFlag, std::promise<ListingBotStatus> promise);
-    void justBuy();
+    void runAsync();
     void watch() const;
     void runWithoutMonitoring(const std::string& pairId);
 
@@ -40,7 +38,9 @@ class ListingBot
     std::thread _thread;
     RunningMode _runningMode;
     std::atomic<bool>* _stopFlag = nullptr;
+    std::atomic<bool> _startFlag = false;
 
+    ListingBotStatus run();
     void shouldSellSync(const ExchangeController::OrderResult& buyOrderResult) const;
     ExchangeController::OrderResult sellAll(const ExchangeController::OrderResult& buyOrderResult);
     std::optional<ExchangeController::OrderResult> buySync();

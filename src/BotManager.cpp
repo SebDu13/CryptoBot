@@ -2,12 +2,12 @@
 #include "logger.hpp"
 #include "exchangeController/ExchangeControllerFactory.hpp"
 #include "mail.hpp"
+#include "chrono.hpp"
 
 namespace Bot{
 
 BotManager::BotManager(const Bot::BotConfig& config)
 :_config(config)
-, _botNumber(config.getThreadNumber())
 , _extraDurationMs(config.getDurationBeforeStartMs())
 , _delayBetweenSpawn(config.getDelayBetweenBotsSpawnUs())
 , _openingTime(config.getStartTime())
@@ -23,19 +23,15 @@ BotManager::BotManager(const Bot::BotConfig& config)
 
     if(config.getMode() == RunningMode::WatchAndSell)
     {
-        if(auto quantityOpt = config.getQuantity())
-            _quantity = *quantityOpt;
-        else
+        if(!config.getQuantity())
             throw std::runtime_error("quantity required with WatchAndSell mode");
     }
     else
     {
-        _quantity = ExchangeController::ExchangeControllerFactory::create(config)->prepareAccount(config.getLimitBuyPrice()
+        _amount = ExchangeController::ExchangeControllerFactory::create(config)->prepareAccount(config.getLimitBuyPrice()
                                                                                                     , config.getMaxAmount()
                                                                                                     , config.getQuantity());
     }
-
-    LOG_INFO << "Quantity computed: " << _quantity;
 }
 
 BotManager::~BotManager()
@@ -46,9 +42,6 @@ void BotManager::startOnTime()
     auto mailConfig = _config.getMailConfig();
 	tools::Mail mail({mailConfig.mailServer, mailConfig.login, mailConfig.password});
 	
-    std::vector<std::unique_ptr<ListingBot>> listingBots;
-    std::vector<std::future<ListingBotStatus>> statusFutures;
-
     using namespace std::chrono;
     if(_startTime <= high_resolution_clock::now())
     {
@@ -56,23 +49,21 @@ void BotManager::startOnTime()
         return;
     }
  
-    for(auto i = 0; i< _botNumber; ++i)
-        listingBots.emplace_back(std::make_unique<ListingBot>(_config, _quantity));
-
-    LOG_INFO << _botNumber << " bots built. Wait for opening..." << _openingTime;
+    std::vector<std::future<ListingBotStatus>> statusFutures;
+    auto bots = prepareBots(statusFutures);
+    LOG_INFO << bots.size() << " bots built. Wait for opening..." << _openingTime;
 
     wait();
 
     LOG_INFO << "Starting bots...";
 
-    for(std::unique_ptr<ListingBot>& bot: listingBots)
+    for(std::unique_ptr<ListingBot>& bot: bots)
     {
         if(bot)
         {
-            std::promise<ListingBotStatus> promiseStatus;
-            statusFutures.emplace_back(promiseStatus.get_future());
-            bot->runAsync(&_stopFlag, std::move(promiseStatus));
+            bot->runAsync();
         }
+
         usleep(_delayBetweenSpawn);
     }
 
@@ -81,6 +72,7 @@ void BotManager::startOnTime()
     for(auto& future : statusFutures)
         botsStatus += future.get();
     
+    LOG_INFO << " *** Global status: ***";
     LOG_INFO << botsStatus;
 
     mail.sendmail(mailConfig.from
@@ -95,6 +87,23 @@ void BotManager::wait()
     while(std::chrono::duration<double, std::micro>(_startTime 
         - std::chrono::high_resolution_clock::now() 
         - std::chrono::milliseconds(_extraDurationMs)).count() > 0);
+}
+
+std::vector<std::unique_ptr<ListingBot>> BotManager::prepareBots(std::vector<std::future<ListingBotStatus>>& statusFutures)
+{   
+    std::vector<std::unique_ptr<ListingBot>> bots;
+    for(const auto& limitPrice: _config.computeLimitBuyPrices())
+    {
+        std::promise<ListingBotStatus> promiseStatus;
+        statusFutures.emplace_back(promiseStatus.get_future());
+        bots.emplace_back(std::make_unique<ListingBot>(_config
+                                                        , _config.getQuantity().value_or(_amount/limitPrice)
+                                                        , limitPrice
+                                                        , &_stopFlag
+                                                        , std::move(promiseStatus)));
+    }
+
+    return bots;
 }
 
 }
