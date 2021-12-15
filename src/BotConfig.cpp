@@ -285,7 +285,7 @@ unsigned int BotConfig::getDurationBeforeStartMs() const
         return 20000 - defaultValue;
 
         default:
-        return defaultValue;
+        return (_firstListingMode ? defaultValue : 5);
     }
 }
 
@@ -297,10 +297,7 @@ unsigned int BotConfig::getDelayBetweenBotsSpawnUs() const
         return 10000; // 10ms
 
         default:
-        if(_firstListingMode)
-            return 4500; //4.5ms
-        else
-            return 500;
+        return _firstListingMode? 4500 : 500;
     }
 }
 

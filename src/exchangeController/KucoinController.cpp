@@ -97,8 +97,8 @@ std::string KucoinController::getOrderBook(const std::string& ) const
 
 OrderResult KucoinController::sendOrder(const std::string& currencyPair, const Side side, const Quantity& quantity, const Price& price) const
 {
-    Json::Value result, resultOrderInfo;
-    _kucoinAPI.sendLimitOrder(currencyPair, convertFrom(side), KucoinCPP::TimeInForce::IOC, quantity, price, result);
+    Json::Value result, resultOrderInfo, resultOrderBook;
+    _kucoinAPI.sendLimitOrder(currencyPair, convertFrom(side), KucoinCPP::TimeInForce::GTC, quantity, price, result);
 
     const auto& status = fillOrderStatus(result);
 
@@ -116,6 +116,8 @@ OrderResult KucoinController::sendOrder(const std::string& currencyPair, const S
         {
             _kucoinAPI.getOrder(result["data"]["orderId"].asString(), resultOrderInfo);
             LOG_DEBUG << resultOrderInfo << std::endl << "tryNumber=" << tryNumber;
+            _kucoinAPI.getOrderBook(currencyPair, resultOrderBook);
+            LOG_DEBUG << resultOrderBook;
             const auto& data = resultOrderInfo["data"];
             
             // vérifier que "code == 200000" ??

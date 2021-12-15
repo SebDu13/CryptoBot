@@ -55,7 +55,7 @@ ListingBotStatus ListingBot::run()
 
     while(!_startFlag)
     {
-        usleep(50);
+        usleep(100);
     }
     LOG_INFO << "Running asynchronously... limit buy price=" << _limitBuyPrice << ",  quantity=" << _quantity << " ...";
 

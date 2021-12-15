@@ -19,11 +19,92 @@
 #include "utf8.h"
 
 #include "cct_codec.hpp"
+#include "cct_nonce.hpp"
 #include "ssl_sha.hpp"
 
-#define HUOBI_HOST "https://api.huobi.pro"
-
 namespace{
+
+std::string query(CURL *curl, std::string_view url, const cct::CurlOptions &opts) {
+
+  // General option settings.
+  const char *optsStr = opts.postdata.c_str();
+
+  std::string modifiedURL(url);
+  std::string jsonBuf;  // Declared here as its scope should be valid until the actual curl call
+  if (opts.requestType() != cct::CurlOptions::RequestType::kPost && !opts.postdata.empty()) {
+    // Add parameters as query std::string after the URL
+    modifiedURL.push_back('?');
+    modifiedURL.append(opts.postdata.str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "");
+  } else {
+    if (opts.postdataInJsonFormat && !opts.postdata.empty()) {
+      jsonBuf = opts.postdata.toJson().asString();
+      optsStr = jsonBuf.c_str();
+    }
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, optsStr);
+  }
+
+  LOG_INFO << opts.requestTypeStr() << url << (opts.postdata.empty() ? "" : " opts ") << optsStr;
+
+  curl_easy_setopt(curl, CURLOPT_URL, modifiedURL.c_str());
+  curl_easy_setopt(curl, CURLOPT_USERAGENT, opts.userAgent);
+  curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, opts.followLocation);
+
+  // Important! We should reset ALL fields of curl object at each call to query,
+  // as it would be possible for a new query to read from a dangling reference form a previous
+  // query.
+  curl_easy_setopt(curl, CURLOPT_POST, opts.requestType() == cct::CurlOptions::RequestType::kPost);
+  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST,
+                   opts.requestType() == cct::CurlOptions::RequestType::kDelete ? "DELETE" : nullptr);
+  if (opts.requestType() == cct::CurlOptions::RequestType::kGet) {
+    // This is to force cURL to switch in a GET request
+    // Useless to reset to 0 in other cases
+    curl_easy_setopt(curl, CURLOPT_HTTPGET, 1);
+  }
+
+  curl_easy_setopt(curl, CURLOPT_VERBOSE, opts.verbose ? 1L : 0L);
+  curl_slist *curlListPtr = nullptr, *oldCurlListPtr = nullptr;
+  for (const std::string &header : opts.httpHeaders) {
+    curlListPtr = curl_slist_append(curlListPtr, header.c_str());
+    if (!curlListPtr) {
+      if (oldCurlListPtr) {
+        curl_slist_free_all(oldCurlListPtr);
+      }
+      throw std::bad_alloc();
+    }
+    oldCurlListPtr = curlListPtr;
+  }
+  using CurlListUniquePtr =
+      std::unique_ptr<curl_slist, decltype([](curl_slist *hdrList) { curl_slist_free_all(hdrList); })>;
+  CurlListUniquePtr curlListUniquePtr(curlListPtr);
+
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, curlListPtr);
+  std::string out;
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &out);
+
+  //setUpProxy(opts.proxy);
+
+  const CURLcode res = curl_easy_perform(curl);  // Get reply
+
+  if (res != CURLE_OK) 
+  {
+	  LOG_INFO << out;
+	throw std::runtime_error("Unexpected response from curl: Error " + std::to_string(res));
+  }
+  return out;
+}
+
+std::string urlEncode(CURL *curl, std::string_view url) {
+
+  using CurlStringUniquePtr = std::unique_ptr<char, decltype([](char *ptr) { curl_free(ptr); })>;
+
+  CurlStringUniquePtr uniquePtr(curl_easy_escape(curl, url.data(), static_cast<int>(url.size())));
+  const char *encodedChars = uniquePtr.get();
+  if (!encodedChars) {
+    throw std::bad_alloc();
+  }
+  return encodedChars;
+}
 
 void fix_utf8_string(std::string& str)
 {
@@ -118,7 +199,7 @@ void HuobiApi::getTicker(const std::string& pairId, SpotTickersResult &json_resu
 
 void HuobiApi::getTickersGeneric(const std::string& url, SpotTickersResult &json_result) const
 {
-	std::string _url(HUOBI_HOST);  
+	std::string _url(kUrlBase);  
 	_url += url;
 
 	std::string str_result;
@@ -157,7 +238,7 @@ void HuobiApi::sendLimitOrder (
 		return ;
 	}
 
-	std::string url(HUOBI_HOST);
+	std::string url(kUrlBase);
 	std::string prefix("/api/v1/orders");
 	url += prefix;
 
@@ -201,7 +282,7 @@ void HuobiApi::getOrder (
 		return ;
 	}
 
-	std::string url(HUOBI_HOST);
+	std::string url(kUrlBase);
 	std::string prefix("/api/v1/orders/" + orderId);
 	url += prefix;
 	
@@ -221,38 +302,74 @@ void HuobiApi::getOrder (
 		LOG_ERROR << "Failed to get anything.";
 }
 
-void HuobiApi::getAccountBalances(Json::Value &json_result) const
+void HuobiApi::getAccounts(Json::Value &json_result) const
 {
-	if ( api_key.size() == 0 || secret_key.size() == 0 )
-	{
-		LOG_ERROR << "API Key and Secret Key has not been set.";
-		return ;
-	}
-
-	std::string url(HUOBI_HOST);
-	std::string prefix("/api/v1/accounts");
-	url += prefix;
-	
-	//LOG_DEBUG << url;
-
-	std::string action("GET");
-	std::string body;
-	const auto httpHeader = generateSignedHttpHeader(action, prefix, body);
-
-	std::string result;
-	curl_api_with_header( url, httpHeader, body, action, result ) ;
-	if ( result.size() > 0 ) 
-	{
-		convertToJson(result, json_result); 
-	} 
-	else 
-		LOG_ERROR << "Failed to get anything.";
+	json_result = PrivateQuery(cct::CurlOptions::RequestType::kGet, "/v1/account/accounts");
 }
 
 void HuobiApi::curl_api( std::string &url, std::string &result_json ) const
 {
 	curl_api_with_header( url , {}, "" , "GET", result_json );	
 }
+
+Json::Value HuobiApi::PrivateQuery(cct::CurlOptions::RequestType requestType, std::string_view method, const cct::CurlPostData& postdata) const
+{
+  std::string url = kUrlBase;
+  url.append(method);
+
+  cct::Nonce nonce = cct::Nonce_LiteralDate();
+  std::string encodedNonce = urlEncode(curl, nonce);
+
+  cct::CurlOptions opts(requestType);
+  opts.userAgent = kUserAgent;
+
+  opts.httpHeaders.push_back("Content-Type: application/json");
+  // Remove 'https://' (which is 8 chars) from URL base
+  std::string paramsStr(opts.requestTypeStr());
+  paramsStr.push_back('\n');
+  paramsStr.append(kUrlBase + 8);
+  paramsStr.push_back('\n');
+  paramsStr.append(method);
+  paramsStr.push_back('\n');
+
+  cct::CurlPostData signaturePostdata;
+
+  signaturePostdata.append("AccessKeyId", api_key);
+  signaturePostdata.append("SignatureMethod", "HmacSHA256");
+  signaturePostdata.append("SignatureVersion", "2");
+  signaturePostdata.append("Timestamp", encodedNonce);
+  if (!postdata.empty()) {
+    if (requestType == cct::CurlOptions::RequestType::kGet) {
+      signaturePostdata.append(postdata);
+    } else {
+      opts.postdataInJsonFormat = true;
+      opts.postdata = postdata;
+    }
+  }
+
+  paramsStr.append(signaturePostdata.str());
+
+  std::string sig = urlEncode(curl, cct::B64Encode(cct::ssl::ShaBin(cct::ssl::ShaType::kSha256, paramsStr, secret_key)));
+  //std::string sig = B64Encode(ssl::ShaBin(ssl::ShaType::kSha256, paramsStr, apiKey.privateKey()));
+
+  signaturePostdata.append("Signature", sig);
+  url.push_back('?');
+  url.append(signaturePostdata.str());
+
+  Json::Value ret;
+  convertToJson(query(curl, url, opts), ret);
+
+  /*if (ret.contains("status") && ret["status"].get<std::string_view>() != "ok") {
+    std::string errMsg("Error: ");
+    if (ret.contains("err-msg")) {
+      errMsg.append(ret["err-msg"].get<std::string_view>());
+    }
+    throw std::runtime_error(std::move(errMsg));
+  }*/
+
+  return ret;
+}
+
 
 std::vector <std::string> HuobiApi::generateSignedHttpHeader(const std::string& action, const std::string& prefix, const std::string& body) const
 {
@@ -265,13 +382,16 @@ std::vector <std::string> HuobiApi::generateSignedHttpHeader(const std::string& 
 	std::string signHash = B64Encode(ssl::ShaBin(ssl::ShaType::kSha256, sign.str(), secret_key));
 	std::string passPhraseHash = B64Encode(ssl::ShaBin(ssl::ShaType::kSha256, passPhrase, secret_key));
 
+	Nonce nonce = Nonce_LiteralDate();
+	std::string encodedNonce = urlEncode(curl, nonce);
+
 	return std::vector <std::string>{
-		 "KC-API-SIGN:" + signHash
-		,"KC-API-TIMESTAMP:" + std::to_string(timeStamp)
-		,"KC-API-KEY:" + api_key
-		,"KC-API-PASSPHRASE:" + passPhraseHash
-		,"KC-API-KEY-VERSION:2"
-		,"Content-Type: application/json"};
+		 "AccessKeyId:" + secret_key
+		,"SignatureMethod:HmacSHA256" 
+		,"SignatureVersion:2"
+		,"Timestamp:" + encodedNonce};
+
+
 }
 
 void HuobiApi::curl_api_with_header(const std::string &url

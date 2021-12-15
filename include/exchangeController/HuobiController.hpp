@@ -1,17 +1,13 @@
-#pragma once
-
-#include <string>
-#include <unordered_set>
-#include "gateiocpp.h"
 #include "exchangeController/AbstractExchangeController.hpp"
+#include "HuobiApi.hpp"
 
 namespace ExchangeController{
 
-class GateioController: public AbstractExchangeController
+class HuobiController: public AbstractExchangeController
 {
     public:
-    GateioController(const Bot::ApiKeys& apiKeys);
-    virtual ~GateioController();
+    HuobiController(const Bot::ApiKeys& apiKeys);
+    virtual ~HuobiController();
     TickerResult getSpotTicker(const std::string& currencyPair) const override;
     std::string getOrderBook(const std::string& currencyPair) const override;
     OrderResult sendOrder(const std::string& currencyPair, const Side side, const Quantity& quantity, const Price& price) const override;
@@ -20,14 +16,8 @@ class GateioController: public AbstractExchangeController
     Quantity getAmountLeft(const OrderResult& buyOrderResult) const override;
     Quantity prepareAccount(const Price& price,const std::optional<Quantity>& maxAmount, const std::optional<Quantity>& quantity) const override;
 
-
     private:
-    const std::string subAccountId = "8630502"; // a mettre dans la config ? 
-    GateIoCPP _gateIoAPI;
-    std::size_t rawCurrencyPairsResultSize;
-
-    Quantity getMainAccountBalance() const;
-    Quantity getSubAccountBalance() const;
+    HuobiApi _huobiApi;
 };
 
-} /* end ExchangeController namespace */ 
+}

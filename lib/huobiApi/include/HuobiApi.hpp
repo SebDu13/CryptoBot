@@ -4,9 +4,13 @@
 #include "json/json.h"
 #include <curl/curl.h>
 #include "FixedPoint.hpp"
+#include "curloptions.hpp"
 
 class HuobiApi {
 	public:
+	  	static constexpr char kUrlBase[] = "https://api.huobi.pro";
+  		static constexpr char kUserAgent[] = "Huobi C++ API Client";
+
 		using SpotTickersResult = Json::Value;
 
 		/* Names match with the api parameters, do not rename */
@@ -43,7 +47,7 @@ class HuobiApi {
 		void getOrder( const std::string& orderId, Json::Value &json_result ) const;
 
 		void getTicker(const std::string& pairId, SpotTickersResult &json_result) const;
-		void getAccountBalances(Json::Value &json_result) const;
+		void getAccounts(Json::Value &json_result) const;
 
 		void getMexcTicker(const std::string& pairId, SpotTickersResult &json_result) const;
 		void getMexcTickersGeneric(const std::string& url, SpotTickersResult &json_result) const;
@@ -64,5 +68,6 @@ class HuobiApi {
 		 std::vector <std::string> generateSignedHttpHeader(const std::string& action
 		, const std::string& prefix
 		, const std::string& body) const;
+		Json::Value PrivateQuery(cct::CurlOptions::RequestType requestType, std::string_view method, const cct::CurlPostData& postdata = cct::CurlPostData()) const;
 
 };

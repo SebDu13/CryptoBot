@@ -42,6 +42,7 @@ class KucoinCPP {
 		
 		void getOrder( const std::string& orderId, Json::Value &json_result ) const;
 
+		void getOrderBook(const std::string& pairId, SpotTickersResult &json_result) const;
 		void getTicker(const std::string& pairId, SpotTickersResult &json_result) const;
         void get24HrStats(const std::string& pairId, SpotTickersResult &json_result) const;
 		void getAccountBalances(Json::Value &json_result) const;

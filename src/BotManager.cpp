@@ -59,6 +59,7 @@ void BotManager::startOnTime()
 
     for(std::unique_ptr<ListingBot>& bot: bots)
     {
+        CHRONO_THIS_SCOPE;
         if(bot)
         {
             bot->runAsync();

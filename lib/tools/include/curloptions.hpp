@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <variant>
 
-#include "cct_json.hpp"
+#include "json/json.h"
 #include "cct_string.hpp"
 #include "cct_vector.hpp"
 
@@ -45,7 +45,7 @@ class CurlPostData {
   void append(std::string_view key, T value) {
     char buf[std::numeric_limits<T>::digits10 + 2];  // + 1 for minus, +1 for additional partial ranges coverage
     auto ret = std::to_chars(std::begin(buf), std::end(buf), value);
-    append(key, std::string_view(buf, ret.ptr));
+    append(key, std::string_view(buf, ret.ptr - buf));
   }
 
   /// Appends content of other CurlPostData into 'this'.
@@ -78,7 +78,7 @@ class CurlPostData {
 
   std::string_view str() const { return _postdata; }
 
-  json toJson() const;
+  Json::Value toJson() const;
 
  private:
   /// Finds the position of the given key

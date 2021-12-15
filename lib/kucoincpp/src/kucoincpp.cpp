@@ -74,6 +74,11 @@ void KucoinCPP::cleanup()
 	curl_global_cleanup();
 }
 
+void KucoinCPP::getOrderBook(const std::string& pairId, SpotTickersResult &json_result) const
+{
+    getTickersGeneric("/api/v1/market/orderbook/level2_20?symbol=" + pairId, json_result);
+}
+
 //Get Ticker
 //{
 //    "sequence": "1550467636704",
