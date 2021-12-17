@@ -46,20 +46,31 @@ int main(int argc, char **argv)
 
 	/* *** HUOBI *** */
 	/*Json::Value result;
-	HuobiApi huobiApi("7af2f75c-2ffb0b7f-d4bdd157-3d2xc4v5bu","5d52900a-23c75337-b3241238-683fa","");
+	HuobiApi huobiApi("","","");
 	//huobiApi.getTicker(botConfig.getPairId(), result);
 	huobiApi.getAccounts(result);
 	LOG_INFO << result;
-
-
 
 	ExchangeController::HuobiController huobiController(Bot::ApiKeys{"",""});
 	auto tickerResult = huobiController.getSpotTicker(botConfig.getPairId());
 	LOG_INFO << tickerResult.toString();*/
 
+	/* *** BINANCE *** */
+	/*Json::Value result;
+	auto key = botConfig.getApiKeys();
+	BinaCPP _binanceAPI(key.pub, key.secret);
+	_binanceAPI.send_order(botConfig.getPairId()
+		, BinaCPP::Side::BUY
+		, BinaCPP::Type::LIMIT
+		, BinaCPP::TimeInForce::IOC
+		, Quantity("10")
+		, botConfig.getLimitBuyPrice()
+		, result);
+	LOG_INFO << result;
 
-	/*auto kucoinController = ExchangeController::ExchangeControllerFactory::create(botConfig);
-	kucoinController->sendOrder(botConfig.getPairId(), ExchangeController::Side::buy, Quantity("10"), botConfig.getLimitBuyPrice());*/
+	auto binanceController = ExchangeController::ExchangeControllerFactory::create(botConfig);
+	ExchangeController::OrderResult orderResult = binanceController->sendOrder(botConfig.getPairId(), ExchangeController::Side::buy, Quantity("10"), botConfig.getLimitBuyPrice());
+	LOG_INFO << orderResult.toString();*/
 
 	
 	return 0;

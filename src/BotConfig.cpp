@@ -178,6 +178,11 @@ ApiKeys BotConfig::getApiKeys() const
             secretKeyEnv = "KUCOIN_S";
             passPhrase = "KUCOIN_P";
         break;
+
+        case Exchange::Binance:
+            apiKeyEnv = "BINANCE_K";
+            secretKeyEnv = "BINANCE_S";
+        break;
     }
 
     ApiKeys apiKeys;
@@ -306,8 +311,9 @@ void BotConfig::setFixedPointPrecision() const
     switch(_exchange)
     {
         case Exchange::Kucoin:
-            tools::FixedPoint::minPrecision = 3;
-            break;
+        case Exchange::Binance:
+             tools::FixedPoint::minPrecision = 3;
+             break;
 
         default:
             tools::FixedPoint::minPrecision = 4;
@@ -341,7 +347,7 @@ MailConfig BotConfig::getMailConfig() const
 std::vector<Price> BotConfig::computeLimitBuyPrices() const
 {
     auto threadNumber = getThreadNumber();
-    if(!_firstListingMode)
+    if(!_firstListingMode || _exchange == Exchange::Kucoin)
         return std::vector<Price>(threadNumber, _limitBuyPrice);
     
     const Quantity maxFactor("16"); // for first world listing  we want to enter at public sale price * 16 at the maximum

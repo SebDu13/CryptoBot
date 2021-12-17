@@ -22,6 +22,7 @@ namespace ExchangeController
     {
         Cancelled,
         Closed,
+        New,
         SizeTooSmall,
         NotEnoughBalance,
         OrderSizeTooLarge,

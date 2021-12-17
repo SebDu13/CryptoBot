@@ -49,7 +49,8 @@ struct MailConfig
 enum class Exchange
 {
     Gateio,
-    Kucoin
+    Kucoin,
+    Binance
 };
 
 enum class Status

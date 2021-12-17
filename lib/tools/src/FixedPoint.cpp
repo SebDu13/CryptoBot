@@ -26,11 +26,16 @@ std::ostream& operator<<(std::ostream& os, const FixedPoint& other)
     return os;
 }
 
-std::string FixedPoint::toString() const
+std::string FixedPoint::toString(size_t precision) const
 { 
     std::ostringstream os;
-    os << setPrecision(minPrecision, toStringExact());
+    os << setPrecision(precision, toStringExact());
     return os.str();
+};
+
+std::string FixedPoint::toString() const
+{ 
+    return toString(minPrecision);
 };
 
 std::string FixedPoint::toStringExact() const

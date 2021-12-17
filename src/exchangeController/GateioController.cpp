@@ -109,7 +109,7 @@ OrderResult GateioController::sendOrder(const std::string& currencyPair, const S
     _gateIoAPI.send_limit_order(currencyPair, convertFrom(side), GateIoCPP::TimeInForce::ioc, quantity, price, result);
     const auto& status = fillOrderStatus(result);
     
-    LOG_DEBUG << "Response: " << result;
+    LOG_INFO << "Response: " << result;
         
     if( status == OrderStatus::Closed || status == OrderStatus::Cancelled)
         return {status

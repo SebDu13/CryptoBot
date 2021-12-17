@@ -42,45 +42,64 @@ void BotManager::startOnTime()
     auto mailConfig = _config.getMailConfig();
 	tools::Mail mail({mailConfig.mailServer, mailConfig.login, mailConfig.password});
 	
-    using namespace std::chrono;
-    if(_startTime <= high_resolution_clock::now())
+    try
     {
-        LOG_ERROR << "Too late.";
-        return;
-    }
- 
-    std::vector<std::future<ListingBotStatus>> statusFutures;
-    auto bots = prepareBots(statusFutures);
-    LOG_INFO << bots.size() << " bots built. Wait for opening..." << _openingTime;
-
-    wait();
-
-    LOG_INFO << "Starting bots...";
-
-    for(std::unique_ptr<ListingBot>& bot: bots)
-    {
-        CHRONO_THIS_SCOPE;
-        if(bot)
+        using namespace std::chrono;
+        if(_startTime <= high_resolution_clock::now())
         {
-            bot->runAsync();
+            LOG_ERROR << "Too late.";
+            return;
+        }
+    
+        std::vector<std::future<ListingBotStatus>> statusFutures;
+        auto bots = prepareBots(statusFutures);
+        LOG_INFO << bots.size() << " bots built. Wait for opening..." << _openingTime;
+
+        wait();
+
+        LOG_INFO << "Starting bots...";
+
+        for(std::unique_ptr<ListingBot>& bot: bots)
+        {
+            CHRONO_THIS_SCOPE;
+            if(bot)
+            {
+                bot->runAsync();
+            }
+
+            usleep(_delayBetweenSpawn);
         }
 
-        usleep(_delayBetweenSpawn);
+        ListingBotStatus botsStatus;
+        // wait that all bots have finished
+        for(auto& future : statusFutures)
+            if(future.valid())
+                botsStatus += future.get();
+        
+        LOG_INFO << " *** Global status: ***";
+        LOG_INFO << botsStatus;
+
+        mail.sendmail(mailConfig.from
+            , mailConfig.to
+            , std::string(magic_enum::enum_name(_config.getExchange())) + " --> "
+                + _config.getPairId() + " "
+                + botsStatus.str());
     }
-
-    ListingBotStatus botsStatus;
-    // wait that all bots have finished
-    for(auto& future : statusFutures)
-        botsStatus += future.get();
-    
-    LOG_INFO << " *** Global status: ***";
-    LOG_INFO << botsStatus;
-
-    mail.sendmail(mailConfig.from
-        , mailConfig.to
-        , std::string(magic_enum::enum_name(_config.getExchange())) + " --> "
-            + _config.getPairId() + " "
-            + botsStatus.str());
+    catch(const std::runtime_error& e)
+    {
+        /* TODO CHECK WHY EXCEPTIONS THROW FROM A THREAD ARE NOT CAUGHT */ 
+        LOG_ERROR << "Exception caught: " << e.what();
+        mail.sendmail(mailConfig.from
+            , mailConfig.to
+            , "Exception caught: " + std::string(e.what()));
+    }
+    catch(...)
+    {
+        LOG_ERROR << "Unknown exception caught";
+        mail.sendmail(mailConfig.from
+            , mailConfig.to
+            , "Unknown exception caught. Position may stay OPEN");
+    }
 }
 
 void BotManager::wait()

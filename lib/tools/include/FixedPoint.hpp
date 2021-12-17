@@ -28,6 +28,7 @@ struct FixedPoint
     
     bool nearZero();
     std::string toString() const;
+    std::string toString(size_t precision) const;
     std::string toStringExact() const;
 
     ValueType value;

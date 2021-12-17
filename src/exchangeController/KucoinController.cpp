@@ -14,7 +14,7 @@ KucoinCPP::Side convertFrom(ExchangeController::Side side)
     case ExchangeController::Side::buy: return KucoinCPP::Side::buy;
     case ExchangeController::Side::sell: return KucoinCPP::Side::sell;
     default:
-        throw ExchangeController::ExchangeControllerException("Define " + std::string(magic_enum::enum_name(side)) + "here: GateIoCPP::Side convertFrom(ExchangeController::Side side)");
+        throw ExchangeController::ExchangeControllerException("Define " + std::string(magic_enum::enum_name(side)) + "here: Kucoincpp::Side convertFrom(ExchangeController::Side side)");
     }
 }
 
