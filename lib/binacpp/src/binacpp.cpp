@@ -944,12 +944,12 @@ BinaCPP::send_order(
 		if(side == Side::SELL)
 		{
 			post_data.append("&quantity=");
-			post_data.append( quantity.toString(2) ); // recuperer LOT_SIZE
+			post_data.append( quantity.toString(1) ); // recuperer LOT_SIZE
 		}
 		else if(side == Side::BUY)
 		{
 			post_data.append("&quoteOrderQty=");
-			post_data.append( quantity.toString() );
+			post_data.append( quantity.toString(1) );
 		}
 		//post_data.append("&quoteOrderQty=");
 		//post_data.append( quantity.toString() );

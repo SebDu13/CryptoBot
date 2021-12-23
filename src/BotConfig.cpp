@@ -271,6 +271,7 @@ unsigned int BotConfig::getThreadNumber() const
     {
         case Exchange::Gateio:
         case Exchange::Kucoin:
+        case Exchange::Binance:
         return 10;
 
         default:
@@ -289,6 +290,9 @@ unsigned int BotConfig::getDurationBeforeStartMs() const
         case Exchange::Kucoin:
         return 20000 - defaultValue;
 
+        case Exchange::Binance:
+        return 30;
+
         default:
         return (_firstListingMode ? defaultValue : 5);
     }
@@ -301,8 +305,11 @@ unsigned int BotConfig::getDelayBetweenBotsSpawnUs() const
         case Exchange::Kucoin:
         return 10000; // 10ms
 
+        case Exchange::Binance:
+        return 500;
+
         default:
-        return _firstListingMode? 4500 : 500;
+        return _firstListingMode? 5500 : 500;
     }
 }
 
